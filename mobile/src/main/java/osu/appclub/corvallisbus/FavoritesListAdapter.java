@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import osu.appclub.corvallisbus.API.TransitStop;
+import osu.appclub.corvallisbus.models.TransitStop;
 
 public class FavoritesListAdapter extends ArrayAdapter<TransitStop> {
 

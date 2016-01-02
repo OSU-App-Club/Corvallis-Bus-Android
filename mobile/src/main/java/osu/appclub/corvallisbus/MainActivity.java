@@ -16,7 +16,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import osu.appclub.corvallisbus.API.TransitAPI;
+import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationView.setNavigationItemSelectedListener(this);
 
         //API Blah blah (This is just generating some dummy data)
-        TransitAPI.populateFavorites();
+        CorvallisBusAPIClient.populateFavorites();
     }
 
     @Override
