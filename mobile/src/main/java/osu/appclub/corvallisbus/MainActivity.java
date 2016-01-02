@@ -16,8 +16,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-//Make sure all is working...
-
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     @Override
@@ -32,9 +30,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
 
-        //Load the Main Fragment
-        MainFragment mainFragment = new MainFragment();
-        ft.replace(R.id.content_frame, mainFragment);
+        //Load the Favorites Fragment
+        FavoritesFragment favoritesFragment = new FavoritesFragment();
+        ft.replace(R.id.content_frame, favoritesFragment);
         ft.commit();
 
 
@@ -92,7 +90,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         //Switch the current view based on the selected item
@@ -104,13 +101,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
+    //This function will switch our current view fragment
+    @SuppressWarnings("StatementWithEmptyBody")
     private void displayView(int id) {
         Fragment fragment = null;
 
-        //Main Nav Item
-        if (id == R.id.nav_main) {
+        //Favorites
+        if (id == R.id.nav_favs) {
             //Create new fragment with args
-            fragment = new MainFragment();
+            fragment = new FavoritesFragment();
             Bundle args = new Bundle();
             //args.put...
             fragment.setArguments(args);
@@ -122,19 +121,57 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //Replace current fragment
             ft.replace(R.id.content_frame, fragment);
             ft.commit();
-
         }
 
-        else if (id == R.id.nav_item1) {
-            //Handle action here...
+        //Stops
+        else if(id == R.id.nav_stops) {
+            //Create new fragment with args
+            fragment = new StopsFragment();
+            Bundle args = new Bundle();
+            //args.put...
+            fragment.setArguments(args);
+
+            //Get fragment manager and start transaction
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
+
+            //Replace current fragment
+            ft.replace(R.id.content_frame, fragment);
+            ft.commit();
         }
 
-        else if (id == R.id.nav_item2) {
-            //Handle action here...
+        //Alerts
+        else if(id == R.id.nav_alerts) {
+            //Create new fragment with args
+            fragment = new AlertsFragment();
+            Bundle args = new Bundle();
+            //args.put...
+            fragment.setArguments(args);
+
+            //Get fragment manager and start transaction
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
+
+            //Replace current fragment
+            ft.replace(R.id.content_frame, fragment);
+            ft.commit();
         }
 
+        //Settings
         else if (id == R.id.nav_settings) {
-            //Handle action here...
+            //Create new fragment with args
+            fragment = new SettingsFragment();
+            Bundle args = new Bundle();
+            //args.put...
+            fragment.setArguments(args);
+
+            //Get fragment manager and start transaction
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
+
+            //Replace current fragment
+            ft.replace(R.id.content_frame, fragment);
+            ft.commit();
         }
     }
 }
