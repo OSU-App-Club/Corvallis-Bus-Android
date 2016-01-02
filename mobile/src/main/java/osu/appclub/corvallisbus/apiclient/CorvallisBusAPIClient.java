@@ -1,9 +1,15 @@
-package osu.appclub.corvallisbus.API;
+package osu.appclub.corvallisbus.apiclient;
 
+import android.location.Location;
 import android.util.Pair;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import osu.appclub.corvallisbus.models.TransitRoute;
+import osu.appclub.corvallisbus.models.TransitStop;
 
 /*
 
@@ -24,7 +30,9 @@ Routes - Collection of Stops
 //API Production server - https://corvallisb.us/api/<ENDPOINT>
 //API GitHub - https://github.com/RikkiGibson/Corvallis-Bus-Server
 
-public final class TransitAPI {
+public final class CorvallisBusAPIClient {
+    // TODO: make this a Map
+    // TODO: figure out if static fields persist longer or something
     //Array of key value pairs to represent all transit stops
     //Pair<Integer, TransitStop> -- <StopID, TransitStop>
     //Using the StopID as the key will make getting/setting stop info easy
@@ -36,10 +44,15 @@ public final class TransitAPI {
     //Array of TransitStops representing the user's favorites
     private static ArrayList<TransitStop> TRANSIT_FAVS;
 
-    private TransitAPI() {
+    private CorvallisBusAPIClient() {
         TRANSIT_STOPS = new ArrayList<>();
         TRANSIT_ROUTES = new ArrayList<>();
         TRANSIT_FAVS = new ArrayList<>();
+    }
+
+    // TODO: figure out how to make network requests not onerous
+    public void getFavoriteStops(@NotNull int[] stopIds, Location location) {
+
     }
 
     public static void populateFavorites() {

@@ -8,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
-import osu.appclub.corvallisbus.API.TransitAPI;
+import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
 
 
 public class FavoritesFragment extends Fragment {
@@ -38,7 +38,7 @@ public class FavoritesFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         //Favorites List adapter
-        FavoritesListAdapter adapter = new FavoritesListAdapter(getActivity(), TransitAPI.getFavorites());
+        FavoritesListAdapter adapter = new FavoritesListAdapter(getActivity(), CorvallisBusAPIClient.getFavorites());
 
         //UI Favorites ListView
         ListView favsList = (ListView) view.findViewById(R.id.favList);

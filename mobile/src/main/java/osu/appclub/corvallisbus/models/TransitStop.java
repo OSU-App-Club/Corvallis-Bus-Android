@@ -1,4 +1,4 @@
-package osu.appclub.corvallisbus.API;
+package osu.appclub.corvallisbus.models;
 
 import com.google.android.gms.maps.model.LatLng;
 
