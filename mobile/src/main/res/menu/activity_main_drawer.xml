@@ -3,17 +3,21 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_main"
-            android:title="Main Item" />
+            android:id="@+id/nav_favs"
+            android:title="Favorites"
+            android:icon="@drawable/favorites_24dp"/>
         <item
-            android:id="@+id/nav_item1"
-            android:title="Item 1" />
+            android:id="@+id/nav_stops"
+            android:title="Bus Stops"
+            android:icon="@drawable/ic_directions_bus_white_24dp"/>
         <item
-            android:id="@+id/nav_item2"
-            android:title="Item 2" />
+            android:id="@+id/nav_alerts"
+            android:title="Travel Alerts"
+            android:icon="@drawable/ic_warning_white_24dp"/>
         <item
             android:id="@+id/nav_settings"
-            android:title="Settings" />
+            android:title="Settings"
+            android:icon="@drawable/ic_settings_white_24dp"/>
     </group>
 
 </menu>

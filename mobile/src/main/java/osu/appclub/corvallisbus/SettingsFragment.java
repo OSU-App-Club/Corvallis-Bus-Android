@@ -8,16 +8,16 @@ import android.view.View;
 import android.view.ViewGroup;
 
 
-public class MainFragment extends Fragment {
+public class SettingsFragment extends Fragment {
 
     //Required empty public constructor
-    public MainFragment() {
+    public SettingsFragment() {
 
     }
 
     //Create a new instance of this fragment using the provided parameters.
-    public static MainFragment newInstance() {
-        MainFragment fragment = new MainFragment();
+    public static SettingsFragment newInstance() {
+        SettingsFragment fragment = new SettingsFragment();
         return fragment;
     }
 
@@ -29,7 +29,7 @@ public class MainFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_main, container, false);
+        return inflater.inflate(R.layout.fragment_settings, container, false);
     }
 
     @Override
