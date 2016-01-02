@@ -16,14 +16,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import osu.appclub.corvallisbus.API.TransitAPI;
+
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+
+    //Main toolbar
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Setup initial UI and Toolbar setup
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle("Favorites");
         setSupportActionBar(toolbar);
 
         //Get our Fragment Manager and begin fragment transaction
@@ -34,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         FavoritesFragment favoritesFragment = new FavoritesFragment();
         ft.replace(R.id.content_frame, favoritesFragment);
         ft.commit();
-
 
         //Current FAB action -- This may be used when adding favorites?
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -54,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //Navigation View
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        //API Blah blah (This is just generating some dummy data)
+        TransitAPI.populateFavorites();
     }
 
     @Override
@@ -108,6 +116,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         //Favorites
         if (id == R.id.nav_favs) {
+            //Set toolbar title
+            toolbar.setTitle("Favorites");
+
             //Create new fragment with args
             fragment = new FavoritesFragment();
             Bundle args = new Bundle();
@@ -125,6 +136,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         //Stops
         else if(id == R.id.nav_stops) {
+            //Set toolbar title
+            toolbar.setTitle("Stops");
+
             //Create new fragment with args
             fragment = new StopsFragment();
             Bundle args = new Bundle();
@@ -142,6 +156,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         //Alerts
         else if(id == R.id.nav_alerts) {
+            //Set toolbar title
+            toolbar.setTitle("Alerts");
+
             //Create new fragment with args
             fragment = new AlertsFragment();
             Bundle args = new Bundle();
@@ -159,6 +176,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         //Settings
         else if (id == R.id.nav_settings) {
+            //Set toolbar title
+            toolbar.setTitle("Settings");
+
             //Create new fragment with args
             fragment = new SettingsFragment();
             Bundle args = new Bundle();
