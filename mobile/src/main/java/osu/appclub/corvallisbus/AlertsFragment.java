@@ -1,6 +1,8 @@
 package osu.appclub.corvallisbus;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -9,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import org.mcsoxford.rss.RSSFeed;
@@ -17,13 +18,8 @@ import org.mcsoxford.rss.RSSItem;
 import org.mcsoxford.rss.RSSReader;
 import org.mcsoxford.rss.RSSReaderException;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 
 public class AlertsFragment extends ListFragment {
@@ -56,9 +52,14 @@ public class AlertsFragment extends ListFragment {
         super.onListItemClick(l, v, position, id);
 
         RSSItem rssItem = listItems.get(position);
-        String uri = rssItem.getLink().toString();
-        Toast toast = Toast.makeText(getActivity(), uri, Toast.LENGTH_SHORT);
-        toast.show();
+        Intent intent = new Intent(Intent.ACTION_VIEW, rssItem.getLink());
+        try {
+            startActivity(intent);
+        }
+        catch (Exception e) {
+            Toast.makeText(getActivity(), "Couldn't open the link for the selected item.", Toast.LENGTH_SHORT)
+                 .show();
+        }
     }
 
     @Override
@@ -68,7 +69,7 @@ public class AlertsFragment extends ListFragment {
         final AlertsListAdapter adapter = new AlertsListAdapter(getActivity(), listItems);
         setListAdapter(adapter);
 
-        // TODO: factor into a named class?
+        // TODO: This captures several members of the parent class. Should it be factored into a named class?
         AsyncTask<Void, Void, List<RSSItem>> task = new AsyncTask<Void, Void, List<RSSItem>>() {
             final String FEED_URI = "https://www.corvallisoregon.gov/Rss.aspx?type=5&cat=100,104,105,106,107,108,109,110,111,112,113,114,58,119&dept=12&paramtime=Current";
             final RSSReader reader = new RSSReader();
@@ -83,7 +84,6 @@ public class AlertsFragment extends ListFragment {
                 catch(RSSReaderException e) {
                     Log.d("corvallisbus", "RSS reader failed to get items");
                     Log.d("corvallisbus", e.getMessage());
-                    // TODO: what to return to indicate failure to the UI?
                     return null;
                 }
             }

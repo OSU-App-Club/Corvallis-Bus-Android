@@ -27,19 +27,19 @@ public class AlertsListAdapter extends ArrayAdapter<RSSItem> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-        // TODO: not sure how to implement holder pattern as the warning suggests
-        View view = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
+        if (convertView == null) {
+            LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
+        }
 
         RSSItem rssItem = getItem(position);
-        TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+        TextView text1 = (TextView) convertView.findViewById(android.R.id.text1);
         text1.setText(rssItem.getTitle());
 
         String formattedDate = dateFormat.format(rssItem.getPubDate());
-        TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+        TextView text2 = (TextView) convertView.findViewById(android.R.id.text2);
         text2.setText(formattedDate);
 
-        return view;
+        return convertView;
     }
 }
