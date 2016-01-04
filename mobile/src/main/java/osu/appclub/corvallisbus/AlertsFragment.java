@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +25,8 @@ import java.util.List;
 
 public class AlertsFragment extends ListFragment {
     final ArrayList<RSSItem> listItems = new ArrayList<>();
+    AlertsListAdapter adapter;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     //Required empty public constructor
     public AlertsFragment() {
@@ -66,8 +69,22 @@ public class AlertsFragment extends ListFragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        final AlertsListAdapter adapter = new AlertsListAdapter(getActivity(), listItems);
-        setListAdapter(adapter);
+        swipeRefreshLayout = (SwipeRefreshLayout) getActivity().findViewById(R.id.swipe_container);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                startLoadingAlerts();
+            }
+        });
+
+        startLoadingAlerts();
+    }
+
+    public void startLoadingAlerts() {
+        if (adapter == null) {
+            adapter = new AlertsListAdapter(getActivity(), listItems);
+            setListAdapter(adapter);
+        }
 
         // TODO: This captures several members of the parent class. Should it be factored into a named class?
         AsyncTask<Void, Void, List<RSSItem>> task = new AsyncTask<Void, Void, List<RSSItem>>() {
@@ -81,7 +98,7 @@ public class AlertsFragment extends ListFragment {
                     List<RSSItem> items = feed.getItems();
                     return items;
                 }
-                catch(RSSReaderException e) {
+                catch(Exception e) {
                     Log.d("corvallisbus", "RSS reader failed to get items");
                     Log.d("corvallisbus", e.getMessage());
                     return null;
@@ -98,7 +115,13 @@ public class AlertsFragment extends ListFragment {
                 }
                 else {
                     listItems.addAll(rssItems);
-                    adapter.notifyDataSetInvalidated();
+                }
+
+                // better to just have the app explode if this thing is somehow null
+                adapter.notifyDataSetInvalidated();
+
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
                 }
             }
         };
