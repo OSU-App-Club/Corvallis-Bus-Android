@@ -1,13 +1,27 @@
 package osu.appclub.corvallisbus.apiclient;
 
 import android.location.Location;
+import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 
-import org.jetbrains.annotations.NotNull;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 import osu.appclub.corvallisbus.models.TransitRoute;
 import osu.appclub.corvallisbus.models.TransitStop;
 
@@ -31,6 +45,7 @@ Routes - Collection of Stops
 //API GitHub - https://github.com/RikkiGibson/Corvallis-Bus-Server
 
 public final class CorvallisBusAPIClient {
+    private static Gson gson = new Gson();
     // TODO: make this a Map
     // TODO: figure out if static fields persist longer or something
     //Array of key value pairs to represent all transit stops
@@ -50,9 +65,27 @@ public final class CorvallisBusAPIClient {
         TRANSIT_FAVS = new ArrayList<>();
     }
 
-    // TODO: figure out how to make network requests not onerous
-    public void getFavoriteStops(@NotNull int[] stopIds, Location location) {
+    @Nullable
+    public static List<FavoriteStopViewModel> getFavoriteStops(@NotNull List<Integer> stopIds, Location location) {
+        String stopIdsString = TextUtils.join(",", stopIds);
+        String locationString = location == null
+                ? ""
+                : location.getLatitude() + "," + location.getLongitude();
+        String urlString = "https://corvallisb.us/api/favorites?stops=" +
+                stopIdsString + "&location=" + locationString;
+        try {
+            URL url = new URL(urlString);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            InputStreamReader streamReader = new InputStreamReader(urlConnection.getInputStream());
 
+            Type listType = new TypeToken<List<FavoriteStopViewModel>>(){}.getType();
+            List<FavoriteStopViewModel> favorites = gson.fromJson(streamReader, listType);
+            return favorites;
+        }
+        catch (Exception e) {
+            Log.d("osu.appclub", e.getMessage());
+            return null;
+        }
     }
 
     public static void populateFavorites() {
