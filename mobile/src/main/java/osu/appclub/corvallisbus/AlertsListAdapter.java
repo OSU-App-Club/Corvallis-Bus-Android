@@ -14,15 +14,15 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+import osu.appclub.corvallisbus.models.AlertsItem;
+
 /**
  * Created by rikkigibson on 1/3/16.
  */
-public class AlertsListAdapter extends ArrayAdapter<RSSItem> {
-    final DateFormat dateFormat;
+public class AlertsListAdapter extends ArrayAdapter<AlertsItem> {
 
-    public AlertsListAdapter(Context context, List<RSSItem> objects) {
+    public AlertsListAdapter(Context context, List<AlertsItem> objects) {
         super(context, android.R.layout.simple_list_item_2, objects);
-        this.dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
     }
 
     @Override
@@ -32,13 +32,12 @@ public class AlertsListAdapter extends ArrayAdapter<RSSItem> {
             convertView = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
         }
 
-        RSSItem rssItem = getItem(position);
+        AlertsItem alertsItem = getItem(position);
         TextView text1 = (TextView) convertView.findViewById(android.R.id.text1);
-        text1.setText(rssItem.getTitle());
+        text1.setText(alertsItem.title);
 
-        String formattedDate = dateFormat.format(rssItem.getPubDate());
         TextView text2 = (TextView) convertView.findViewById(android.R.id.text2);
-        text2.setText(formattedDate);
+        text2.setText(alertsItem.dateText);
 
         return convertView;
     }

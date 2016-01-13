@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.mcsoxford.rss.RSSFeed;
@@ -19,18 +20,26 @@ import org.mcsoxford.rss.RSSItem;
 import org.mcsoxford.rss.RSSReader;
 import org.mcsoxford.rss.RSSReaderException;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import osu.appclub.corvallisbus.models.AlertsItem;
 
 
 public class AlertsFragment extends ListFragment {
-    final ArrayList<RSSItem> listItems = new ArrayList<>();
+    final AlertsItem PLACEHOLDER_ITEM;
+    final ArrayList<AlertsItem> listItems = new ArrayList<>();
     AlertsListAdapter adapter;
     SwipeRefreshLayout swipeRefreshLayout;
 
     //Required empty public constructor
     public AlertsFragment() {
-
+        PLACEHOLDER_ITEM = new AlertsItem();
+        PLACEHOLDER_ITEM.title = "No current service alerts!";
+        PLACEHOLDER_ITEM.dateText = "Tap to view the service alerts website";
+        PLACEHOLDER_ITEM.link = Uri.parse("http://www.corvallisoregon.gov/index.aspx?page=1105");
     }
 
     //Create a new instance of this fragment using the provided parameters.
@@ -46,16 +55,16 @@ public class AlertsFragment extends ListFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        //Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_alerts, container, false);
+        View root = inflater.inflate(R.layout.fragment_alerts, container, false);
+        return root;
     }
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
 
-        RSSItem rssItem = listItems.get(position);
-        Intent intent = new Intent(Intent.ACTION_VIEW, rssItem.getLink());
+        AlertsItem alertsItem = listItems.get(position);
+        Intent intent = new Intent(Intent.ACTION_VIEW, alertsItem.link);
         try {
             startActivity(intent);
         }
@@ -86,17 +95,21 @@ public class AlertsFragment extends ListFragment {
             setListAdapter(adapter);
         }
 
-        // TODO: This captures several members of the parent class. Should it be factored into a named class?
-        AsyncTask<Void, Void, List<RSSItem>> task = new AsyncTask<Void, Void, List<RSSItem>>() {
+        AsyncTask<Void, Void, List<AlertsItem>> task = new AsyncTask<Void, Void, List<AlertsItem>>() {
             final String FEED_URI = "https://www.corvallisoregon.gov/Rss.aspx?type=5&cat=100,104,105,106,107,108,109,110,111,112,113,114,58,119&dept=12&paramtime=Current";
             final RSSReader reader = new RSSReader();
 
             @Override
-            protected List<RSSItem> doInBackground(Void... params) {
+            protected List<AlertsItem> doInBackground(Void... params) {
                 try {
                     RSSFeed feed = reader.load(FEED_URI);
-                    List<RSSItem> items = feed.getItems();
-                    return items;
+                    List<RSSItem> rssItems = feed.getItems();
+
+                    ArrayList<AlertsItem> alertsItems = new ArrayList<>(rssItems.size());
+                    for (RSSItem rssItem : rssItems) {
+                        alertsItems.add(AlertsItem.fromRSSItem(rssItem));
+                    }
+                    return alertsItems;
                 }
                 catch(Exception e) {
                     Log.d("corvallisbus", "RSS reader failed to get items");
@@ -106,15 +119,19 @@ public class AlertsFragment extends ListFragment {
             }
 
             @Override
-            protected void onPostExecute(List<RSSItem> rssItems) {
+            protected void onPostExecute(List<AlertsItem> alertsItems) {
                 listItems.clear();
 
-                if (rssItems == null) {
+                if (alertsItems == null) {
                     Toast toast = Toast.makeText(getActivity(), "Failed to load Service Alerts feed", Toast.LENGTH_SHORT);
                     toast.show();
                 }
                 else {
-                    listItems.addAll(rssItems);
+                    listItems.addAll(alertsItems);
+                }
+
+                if (listItems.isEmpty()) {
+                    listItems.add(PLACEHOLDER_ITEM);
                 }
 
                 // better to just have the app explode if this thing is somehow null
