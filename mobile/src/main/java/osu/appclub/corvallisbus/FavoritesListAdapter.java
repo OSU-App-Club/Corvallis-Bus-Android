@@ -2,6 +2,7 @@ package osu.appclub.corvallisbus;
 
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,7 +43,7 @@ public class FavoritesListAdapter extends ArrayAdapter<FavoriteStopViewModel> {
 
         TextView firstRouteName = (TextView)convertView.findViewById(R.id.firstRouteName);
         firstRouteName.setText(favorite.firstRouteName);
-        firstRouteName.setBackgroundColor(toColorValue(favorite.firstRouteColor));
+        firstRouteName.setBackgroundColor(favorite.firstRouteColor.isEmpty() ? Color.GRAY : toColorValue(favorite.firstRouteColor));
 
         ((TextView)convertView.findViewById(R.id.firstRouteArrivals)).setText(favorite.firstRouteArrivals);
 
