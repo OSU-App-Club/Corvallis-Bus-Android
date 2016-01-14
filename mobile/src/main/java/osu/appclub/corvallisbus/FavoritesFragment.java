@@ -6,8 +6,10 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.ListFragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +32,7 @@ public class FavoritesFragment extends ListFragment {
     GoogleApiClient apiClient;
     ArrayList<FavoriteStopViewModel> listItems = new ArrayList<>();
     FavoritesListAdapter adapter;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     //Required empty public constructor
     public FavoritesFragment() {
@@ -64,6 +67,15 @@ public class FavoritesFragment extends ListFragment {
 
         adapter = new FavoritesListAdapter(getActivity(), listItems);
         getListView().setAdapter(adapter);
+
+        swipeRefreshLayout = (SwipeRefreshLayout) getActivity().findViewById(R.id.swipe_container);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                startLoadingFavorites();
+            }
+        });
+
         startLoadingFavorites();
     }
 
@@ -72,40 +84,44 @@ public class FavoritesFragment extends ListFragment {
      * sending it off to the network to get the user's favorite stops.
      */
     public void startLoadingFavorites() {
+        if (apiClient == null) {
+            GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
+                @Override
+                public void onConnected(Bundle bundle) {
+                    if (apiClient == null) {
+                        // failure
+                        return;
+                    }
 
-        GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
-            @Override
-            public void onConnected(Bundle bundle) {
-                if (apiClient == null) {
-                    // failure
-                    return;
+                    int permissionValue = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION);
+                    if (permissionValue == PackageManager.PERMISSION_GRANTED) {
+                        Location location = LocationServices.FusedLocationApi.getLastLocation(apiClient);
+                        startFavoritesDownloadTask(location);
+                    }
                 }
 
-                int permissionValue = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION);
-                if (permissionValue == PackageManager.PERMISSION_GRANTED) {
-                    Location location = LocationServices.FusedLocationApi.getLastLocation(apiClient);
-                    startFavoritesDownloadTask(location);
+                @Override
+                public void onConnectionSuspended(int i) {
+
                 }
-            }
+            };
 
-            @Override
-            public void onConnectionSuspended(int i) {
+            GoogleApiClient.OnConnectionFailedListener failedListener = new GoogleApiClient.OnConnectionFailedListener() {
+                @Override
+                public void onConnectionFailed(@NotNull ConnectionResult connectionResult) {
+                    // not sure what to do here
+                }
+            };
 
-            }
-        };
-
-        GoogleApiClient.OnConnectionFailedListener failedListener = new GoogleApiClient.OnConnectionFailedListener() {
-            @Override
-            public void onConnectionFailed(@NotNull ConnectionResult connectionResult) {
-                // not sure what to do here
-            }
-        };
-
-        apiClient = new GoogleApiClient.Builder(getActivity())
-                .addConnectionCallbacks(connectionCallbacks)
-                .addOnConnectionFailedListener(failedListener)
-                .addApi(LocationServices.API)
-                .build();
+            apiClient = new GoogleApiClient.Builder(getActivity())
+                    .addConnectionCallbacks(connectionCallbacks)
+                    .addOnConnectionFailedListener(failedListener)
+                    .addApi(LocationServices.API)
+                    .build();
+        } else if (apiClient.isConnected()) {
+            Location location = LocationServices.FusedLocationApi.getLastLocation(apiClient);
+            startFavoritesDownloadTask(location);
+        }
 
     }
 
@@ -134,6 +150,10 @@ public class FavoritesFragment extends ListFragment {
                     listItems.addAll(favoriteStopViewModels);
                 }
                 adapter.notifyDataSetInvalidated();
+
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
         };
         task.execute();
