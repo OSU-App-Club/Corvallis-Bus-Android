@@ -41,15 +41,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         ft.replace(R.id.content_frame, favoritesFragment);
         ft.commit();
 
-        //Current FAB action -- This may be used when adding favorites?
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "FAB Action is Fab!", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-            }
-        });
-
         //Navigation Drawer
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
