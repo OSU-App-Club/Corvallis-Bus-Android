@@ -17,6 +17,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 import osu.appclub.corvallisbus.models.BusRoute;
 import osu.appclub.corvallisbus.models.BusStaticData;
@@ -45,7 +46,8 @@ Routes - Collection of Stops
 
 @WorkerThread
 public final class CorvallisBusAPIClient {
-    private static Gson gson = new GsonBuilder()
+    static final String BASE_URL = "https://corvallisb.us/api";
+    private static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(BusRoute.class, new BusRoute.Deserializer())
             .registerTypeAdapter(BusStop.class, new BusStop.Deserializer())
             .registerTypeAdapter(BusStaticData.class, new BusStaticData.Deserializer())
@@ -62,7 +64,7 @@ public final class CorvallisBusAPIClient {
         String locationString = location == null
                 ? ""
                 : location.getLatitude() + "," + location.getLongitude();
-        String urlString = "https://corvallisb.us/api/favorites?stops=" +
+        String urlString = BASE_URL + "/favorites?stops=" +
                 stopIdsString + "&location=" + locationString;
         try {
             URL url = new URL(urlString);
@@ -88,12 +90,29 @@ public final class CorvallisBusAPIClient {
         }
 
         try {
-            URL url = new URL("https://corvallisb.us/api/static");
+            URL url = new URL(BASE_URL + "/static");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             InputStreamReader streamReader = new InputStreamReader(urlConnection.getInputStream());
 
             staticDataCache = gson.fromJson(streamReader, BusStaticData.class);
             return staticDataCache;
+        }
+        catch (Exception e) {
+            Log.d("osu.appclub", e.getMessage());
+            return null;
+        }
+    }
+
+    private static final Type arrivalsSummaryMapType = new TypeToken<Map<Integer, List<RouteArrivalsSummary>>>(){}.getType();
+    @Nullable
+    public static List<RouteArrivalsSummary> getRouteArrivalsSummary(int stopId) {
+        try {
+            URL url = new URL(BASE_URL + "/arrivals-summary/" + stopId);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            InputStreamReader streamReader = new InputStreamReader(urlConnection.getInputStream());
+
+            Map<Integer, List<RouteArrivalsSummary>> arrivalsSummaries = gson.fromJson(streamReader, arrivalsSummaryMapType);
+            return arrivalsSummaries.get(stopId);
         }
         catch (Exception e) {
             Log.d("osu.appclub", e.getMessage());
