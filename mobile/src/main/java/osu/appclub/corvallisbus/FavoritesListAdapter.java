@@ -2,6 +2,7 @@ package osu.appclub.corvallisbus;
 
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,9 +16,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
+import osu.appclub.corvallisbus.models.Translation;
 
 public class FavoritesListAdapter extends ArrayAdapter<FavoriteStopViewModel> {
 
+    // TODO: are these instance variables needed?
     private final Context context;
     private final ArrayList<FavoriteStopViewModel> favorites;
 
@@ -42,13 +45,13 @@ public class FavoritesListAdapter extends ArrayAdapter<FavoriteStopViewModel> {
 
         TextView firstRouteName = (TextView)convertView.findViewById(R.id.firstRouteName);
         firstRouteName.setText(favorite.firstRouteName);
-        firstRouteName.setBackgroundColor(toColorValue(favorite.firstRouteColor));
+        firstRouteName.setBackgroundColor(favorite.firstRouteColor.isEmpty() ? Color.GRAY : Translation.toColorValue(favorite.firstRouteColor));
 
         ((TextView)convertView.findViewById(R.id.firstRouteArrivals)).setText(favorite.firstRouteArrivals);
 
         TextView secondRouteName = (TextView)convertView.findViewById(R.id.secondRouteName);
         secondRouteName.setText(favorite.secondRouteName);
-        secondRouteName.setBackgroundColor(toColorValue(favorite.secondRouteColor));
+        secondRouteName.setBackgroundColor(Translation.toColorValue(favorite.secondRouteColor));
 
         ((TextView)convertView.findViewById(R.id.secondRouteArrivals)).setText(favorite.secondRouteArrivals);
 
@@ -58,19 +61,5 @@ public class FavoritesListAdapter extends ArrayAdapter<FavoriteStopViewModel> {
 
         //Return our row
         return convertView;
-    }
-
-    public int toColorValue(@NotNull String color) {
-        if (color.isEmpty()) {
-            return 0;
-        }
-        try {
-            int colorValue = Integer.parseInt(color, 16) + 0xFF000000;
-            return colorValue;
-        }
-        catch (Exception e) {
-            Log.d("osu.appclub", "Route color failed to parse");
-            return 0;
-        }
     }
 }
