@@ -50,9 +50,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //Navigation View
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
-        //API Blah blah (This is just generating some dummy data)
-        CorvallisBusAPIClient.populateFavorites();
     }
 
     @Override
@@ -100,89 +97,78 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
+    private FavoritesFragment favoritesFragment;
+    FavoritesFragment getFavoritesFragment() {
+        if (favoritesFragment == null) {
+            favoritesFragment = new FavoritesFragment();
+        }
+        return favoritesFragment;
+    }
+
+    private StopsFragment stopsFragment;
+    StopsFragment getStopsFragment() {
+        if (stopsFragment == null) {
+            stopsFragment = new StopsFragment();
+        }
+        return stopsFragment;
+    }
+
+    private AlertsFragment alertsFragment;
+    AlertsFragment getAlertsFragment() {
+        if (alertsFragment == null) {
+            alertsFragment = new AlertsFragment();
+        }
+        return alertsFragment;
+    }
+
+    private SettingsFragment settingsFragment;
+    SettingsFragment getSettingsFragment() {
+        if (settingsFragment == null) {
+            settingsFragment = new SettingsFragment();
+        }
+        return settingsFragment;
+    }
+
     //This function will switch our current view fragment
     @SuppressWarnings("StatementWithEmptyBody")
     private void displayView(int id) {
-        Fragment fragment = null;
-
-        //Favorites
-        if (id == R.id.nav_favs) {
-            //Set toolbar title
-            toolbar.setTitle("Favorites");
-
-            //Create new fragment with args
-            fragment = new FavoritesFragment();
-            Bundle args = new Bundle();
-            //args.put...
-            fragment.setArguments(args);
-
-            //Get fragment manager and start transaction
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-
-            //Replace current fragment
-            ft.replace(R.id.content_frame, fragment);
-            ft.commit();
+        Fragment newFragment;
+        switch (id) {
+            case R.id.nav_favs:
+                toolbar.setTitle("Favorites");
+                newFragment = getFavoritesFragment();
+                break;
+            case R.id.nav_stops:
+                toolbar.setTitle("Stops");
+                newFragment = getStopsFragment();
+                break;
+            case R.id.nav_alerts:
+                toolbar.setTitle("Alerts");
+                newFragment = getAlertsFragment();
+                break;
+            case R.id.nav_settings:
+                toolbar.setTitle("Settings");
+                newFragment = getSettingsFragment();
+                break;
+            default:
+                throw new UnsupportedOperationException();
         }
 
-        //Stops
-        else if(id == R.id.nav_stops) {
-            //Set toolbar title
-            toolbar.setTitle("Stops");
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment currentFragment = fm.findFragmentById(R.id.content_frame);
 
-            //Create new fragment with args
-            fragment = new StopsFragment();
-            Bundle args = new Bundle();
-            //args.put...
-            fragment.setArguments(args);
-
-            //Get fragment manager and start transaction
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-
-            //Replace current fragment
-            ft.replace(R.id.content_frame, fragment);
-            ft.commit();
+        if (currentFragment == newFragment) {
+            return;
         }
 
-        //Alerts
-        else if(id == R.id.nav_alerts) {
-            //Set toolbar title
-            toolbar.setTitle("Alerts");
+        Bundle args = new Bundle();
+        //args.put...
+        newFragment.setArguments(args);
 
-            //Create new fragment with args
-            fragment = new AlertsFragment();
-            Bundle args = new Bundle();
-            //args.put...
-            fragment.setArguments(args);
+        FragmentTransaction ft = fm.beginTransaction();
 
-            //Get fragment manager and start transaction
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-
-            //Replace current fragment
-            ft.replace(R.id.content_frame, fragment);
-            ft.commit();
-        }
-
-        //Settings
-        else if (id == R.id.nav_settings) {
-            //Set toolbar title
-            toolbar.setTitle("Settings");
-
-            //Create new fragment with args
-            fragment = new SettingsFragment();
-            Bundle args = new Bundle();
-            //args.put...
-            fragment.setArguments(args);
-
-            //Get fragment manager and start transaction
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-
-            //Replace current fragment
-            ft.replace(R.id.content_frame, fragment);
-            ft.commit();
-        }
+        //Replace current fragment
+        ft.replace(R.id.content_frame, newFragment);
+        ft.commit();
     }
 }
