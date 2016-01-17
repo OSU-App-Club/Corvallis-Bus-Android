@@ -1,29 +1,28 @@
 package osu.appclub.corvallisbus.apiclient;
 
 import android.location.Location;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.Pair;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
+import osu.appclub.corvallisbus.models.BusRoute;
+import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
-import osu.appclub.corvallisbus.models.TransitRoute;
-import osu.appclub.corvallisbus.models.TransitStop;
+import osu.appclub.corvallisbus.models.BusStop;
+import osu.appclub.corvallisbus.models.RouteArrivalsSummary;
 
 /*
 
@@ -44,27 +43,19 @@ Routes - Collection of Stops
 //API Production server - https://corvallisb.us/api/<ENDPOINT>
 //API GitHub - https://github.com/RikkiGibson/Corvallis-Bus-Server
 
+@WorkerThread
 public final class CorvallisBusAPIClient {
-    private static Gson gson = new Gson();
-    // TODO: make this a Map
-    // TODO: figure out if static fields persist longer or something
-    //Array of key value pairs to represent all transit stops
-    //Pair<Integer, TransitStop> -- <StopID, TransitStop>
-    //Using the StopID as the key will make getting/setting stop info easy
-    private static List<Pair<Integer, TransitStop>> TRANSIT_STOPS;
-
-    //Array of key value pairs to represent all transit routes <RouteName, TransitRoute>
-    private static List<Pair<String, TransitRoute>> TRANSIT_ROUTES;
-
-    //Array of TransitStops representing the user's favorites
-    private static ArrayList<TransitStop> TRANSIT_FAVS;
+    private static Gson gson = new GsonBuilder()
+            .registerTypeAdapter(BusRoute.class, new BusRoute.Deserializer())
+            .registerTypeAdapter(BusStop.class, new BusStop.Deserializer())
+            .registerTypeAdapter(BusStaticData.class, new BusStaticData.Deserializer())
+            .create();
 
     private CorvallisBusAPIClient() {
-        TRANSIT_STOPS = new ArrayList<>();
-        TRANSIT_ROUTES = new ArrayList<>();
-        TRANSIT_FAVS = new ArrayList<>();
+
     }
 
+    private static final Type favoriteStopsListType = new TypeToken<List<FavoriteStopViewModel>>(){}.getType();
     @Nullable
     public static List<FavoriteStopViewModel> getFavoriteStops(@NotNull List<Integer> stopIds, Location location) {
         String stopIdsString = TextUtils.join(",", stopIds);
@@ -78,8 +69,8 @@ public final class CorvallisBusAPIClient {
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             InputStreamReader streamReader = new InputStreamReader(urlConnection.getInputStream());
 
-            Type listType = new TypeToken<List<FavoriteStopViewModel>>(){}.getType();
-            List<FavoriteStopViewModel> favorites = gson.fromJson(streamReader, listType);
+
+            List<FavoriteStopViewModel> favorites = gson.fromJson(streamReader, favoriteStopsListType);
             return favorites;
         }
         catch (Exception e) {
@@ -88,24 +79,25 @@ public final class CorvallisBusAPIClient {
         }
     }
 
-    public static void populateFavorites() {
-        TRANSIT_FAVS = new ArrayList<>();
+    private static BusStaticData staticDataCache;
 
-        //DUMMY DATA FOR NOW
-        TransitStop stop1 = new TransitStop();
-        TransitStop stop2 = new TransitStop();
-        TransitStop stop3 = new TransitStop();
+    @Nullable
+    public static BusStaticData getStaticData() {
+        if (staticDataCache != null) {
+            return staticDataCache;
+        }
 
-        stop1.setName("STOP 1");
-        stop2.setName("STOP 2");
-        stop3.setName("STOP 3");
+        try {
+            URL url = new URL("https://corvallisb.us/api/static");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            InputStreamReader streamReader = new InputStreamReader(urlConnection.getInputStream());
 
-        TRANSIT_FAVS.add(stop1);
-        TRANSIT_FAVS.add(stop2);
-        TRANSIT_FAVS.add(stop3);
-    }
-
-    public static ArrayList<TransitStop> getFavorites() {
-        return TRANSIT_FAVS;
+            staticDataCache = gson.fromJson(streamReader, BusStaticData.class);
+            return staticDataCache;
+        }
+        catch (Exception e) {
+            Log.d("osu.appclub", e.getMessage());
+            return null;
+        }
     }
 }
