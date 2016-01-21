@@ -18,12 +18,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import osu.appclub.corvallisbus.models.BusRoute;
 import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.RouteArrivalsSummary;
+import osu.appclub.corvallisbus.models.StopDetailsViewModel;
 
 /*
 
@@ -83,24 +86,28 @@ public final class CorvallisBusAPIClient {
 
     private static BusStaticData staticDataCache;
 
+    /**
+     * Prevents static data from being downloaded multiple times.
+     */
+    private static final Lock staticDataLock = new ReentrantLock(true);
     @Nullable
     public static BusStaticData getStaticData() {
-        if (staticDataCache != null) {
-            return staticDataCache;
-        }
+        staticDataLock.lock();
+        if (staticDataCache == null) {
+            try {
+                URL url = new URL(BASE_URL + "/static");
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                InputStreamReader streamReader = new InputStreamReader(urlConnection.getInputStream());
 
-        try {
-            URL url = new URL(BASE_URL + "/static");
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            InputStreamReader streamReader = new InputStreamReader(urlConnection.getInputStream());
+                staticDataCache = gson.fromJson(streamReader, BusStaticData.class);
+            } catch (Exception e) {
+                Log.d("osu.appclub", e.getMessage());
+            }
+        }
+        staticDataLock.unlock();
 
-            staticDataCache = gson.fromJson(streamReader, BusStaticData.class);
-            return staticDataCache;
-        }
-        catch (Exception e) {
-            Log.d("osu.appclub", e.getMessage());
-            return null;
-        }
+        return staticDataCache;
+
     }
 
     private static final Type arrivalsSummaryMapType = new TypeToken<Map<Integer, List<RouteArrivalsSummary>>>(){}.getType();
@@ -118,5 +125,17 @@ public final class CorvallisBusAPIClient {
             Log.d("osu.appclub", e.getMessage());
             return null;
         }
+    }
+
+    @Nullable
+    public static StopDetailsViewModel getStopDetailsViewModel(int stopId) {
+        BusStaticData staticData = getStaticData();
+        List<RouteArrivalsSummary> arrivalsSummaries = getRouteArrivalsSummary(stopId);
+
+        if (staticData != null && arrivalsSummaries != null) {
+            return new StopDetailsViewModel(stopId, staticData, arrivalsSummaries);
+        }
+
+        return null;
     }
 }

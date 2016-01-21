@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -16,15 +17,36 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.models.BusRoute;
+import osu.appclub.corvallisbus.models.BusStaticData;
+import osu.appclub.corvallisbus.models.BusStop;
+import osu.appclub.corvallisbus.models.RouteArrivalsSummary;
 import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
+import osu.appclub.corvallisbus.models.StopDetailsViewModel;
 
-public class StopsFragment extends ListFragment {
+public class StopsFragment extends ListFragment implements BusMapPresenter.OnStopSelectedListener {
     MapView mapView;
+    TextView textStopName;
+    BusMapPresenter mapPresenter;
+
+    StopDetailsListAdapter listAdapter;
+    ArrayList<RouteDetailsViewModel> listItems = new ArrayList<>();
 
     //Required empty public constructor
     public StopsFragment() {
@@ -51,45 +73,46 @@ public class StopsFragment extends ListFragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        textStopName = (TextView) getActivity().findViewById(R.id.stopName);
         mapView = (MapView) getActivity().findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                mapPresenter = new BusMapPresenter(googleMap);
+                mapPresenter.stopSelectedListener = StopsFragment.this;
+            }
+        });
 
-//        ImageButton buttonFavorite = (ImageButton) getActivity().findViewById(R.id.buttonFavorite);
-//        buttonFavorite.setOnClickListener(new View.OnClickListener() {
-//            boolean isFavorite = false;
-//            @Override
-//            public void onClick(View v) {
-//                isFavorite = !isFavorite;
-//                int colorResourceId = isFavorite ? R.color.colorFavorite : android.R.color.holo_purple;
-//                int colorValue;
-//                if (android.os.Build.VERSION.SDK_INT >= 23) {
-//                    Resources.Theme theme = getActivity().getTheme();
-//                    colorValue = getResources().getColor(colorResourceId, theme);
-//                } else {
-//                    colorValue = getResources().getColor(colorResourceId);
-//                }
-//                v.setBackgroundColor(colorValue);
-//            }
-//        });
-
-        ArrayList<RouteDetailsViewModel> TEST_DATA = new ArrayList<>();
-
-        RouteDetailsViewModel routeDetails = new RouteDetailsViewModel();
-        routeDetails.routeColor = 0xFF00ADEE;
-        routeDetails.routeName = "1";
-        routeDetails.arrivalsSummary = "11 minutes, 01:53 PM";
-        routeDetails.scheduleSummary = "Hourly until 07:03 PM";
-        TEST_DATA.add(routeDetails);
-
-        routeDetails = new RouteDetailsViewModel();
-        routeDetails.routeColor = 0xFFBD559F;
-        routeDetails.routeName = "5";
-        routeDetails.arrivalsSummary = "25 minutes, 01:38 PM";
-        routeDetails.scheduleSummary = "Last arrival at 08:08 PM";
-        TEST_DATA.add(routeDetails);
-
-        StopDetailsListAdapter listAdapter = new StopDetailsListAdapter(getActivity(), TEST_DATA);
+        listAdapter = new StopDetailsListAdapter(getActivity(), listItems);
         setListAdapter(listAdapter);
+    }
+
+    public void onStopSelected(int stopId) {
+        startLoadingArrivals(stopId);
+    }
+
+    public void startLoadingArrivals(final int stopId) {
+        new AsyncTask<Void, Void, StopDetailsViewModel>() {
+
+            @Override
+            protected StopDetailsViewModel doInBackground(Void... params) {
+                return CorvallisBusAPIClient.getStopDetailsViewModel(stopId);
+            }
+
+            @Override
+            protected void onPostExecute(StopDetailsViewModel stopDetailsViewModel) {
+                textStopName.setText(stopDetailsViewModel == null
+                        ? ""
+                        : stopDetailsViewModel.stopName);
+
+                listItems.clear();
+                if (stopDetailsViewModel != null) {
+                    listItems.addAll(stopDetailsViewModel.routeDetailsList);
+                }
+                listAdapter.notifyDataSetChanged();
+            }
+        }.execute();
     }
 
     @Override

@@ -9,5 +9,11 @@ public class RouteDetailsViewModel {
     public int routeColor;
     public String arrivalsSummary;
     public String scheduleSummary;
-}
 
+    public RouteDetailsViewModel(RouteArrivalsSummary arrivalsSummary, BusRoute route) {
+        this.routeName = route.routeNo;
+        this.routeColor = route.color;
+        this.arrivalsSummary = arrivalsSummary.arrivalsSummary;
+        this.scheduleSummary = arrivalsSummary.scheduleSummary;
+    }
+}

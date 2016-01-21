@@ -34,7 +34,7 @@ public class StopDetailsListAdapter extends ArrayAdapter<RouteDetailsViewModel> 
         routeName.setBackgroundColor(routeDetails.routeColor);
 
         ((TextView)convertView.findViewById(R.id.arrivalsSummary)).setText(routeDetails.arrivalsSummary);
-        ((TextView)convertView.findViewById(R.id.arrivalsSummary)).setText(routeDetails.arrivalsSummary);
+        ((TextView)convertView.findViewById(R.id.scheduleSummary)).setText(routeDetails.scheduleSummary);
 
 
         return convertView;

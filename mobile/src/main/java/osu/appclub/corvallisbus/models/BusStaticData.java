@@ -17,8 +17,8 @@ import java.util.Map;
  * Deserialization target for static data endpoint.
  */
 public class BusStaticData {
-    Map<String, BusRoute> routes;
-    SparseArray<BusStop> stops;
+    public Map<String, BusRoute> routes;
+    public SparseArray<BusStop> stops;
 
     public static class Deserializer implements JsonDeserializer<BusStaticData> {
         final Type routesType = new TypeToken<Map<String, BusRoute>>(){}.getType();
