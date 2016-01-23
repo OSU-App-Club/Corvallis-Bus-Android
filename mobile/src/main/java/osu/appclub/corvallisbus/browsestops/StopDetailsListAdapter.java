@@ -1,4 +1,4 @@
-package osu.appclub.corvallisbus;
+package osu.appclub.corvallisbus.browsestops;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
 import osu.appclub.corvallisbus.models.Translation;
 

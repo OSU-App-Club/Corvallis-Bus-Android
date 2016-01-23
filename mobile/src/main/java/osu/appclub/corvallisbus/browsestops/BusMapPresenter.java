@@ -1,4 +1,4 @@
-package osu.appclub.corvallisbus;
+package osu.appclub.corvallisbus.browsestops;
 
 import android.location.Location;
 import android.os.AsyncTask;
@@ -16,6 +16,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.HashMap;
 import java.util.Map;
 
+import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.BusStop;

@@ -1,4 +1,4 @@
-package osu.appclub.corvallisbus;
+package osu.appclub.corvallisbus.favorites;
 
 
 import android.content.Context;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
+import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 import osu.appclub.corvallisbus.models.Translation;
 

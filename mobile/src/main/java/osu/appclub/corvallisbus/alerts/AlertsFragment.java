@@ -1,4 +1,4 @@
-package osu.appclub.corvallisbus;
+package osu.appclub.corvallisbus.alerts;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,19 +12,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import org.mcsoxford.rss.RSSFeed;
 import org.mcsoxford.rss.RSSItem;
 import org.mcsoxford.rss.RSSReader;
-import org.mcsoxford.rss.RSSReaderException;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.models.AlertsItem;
 
 

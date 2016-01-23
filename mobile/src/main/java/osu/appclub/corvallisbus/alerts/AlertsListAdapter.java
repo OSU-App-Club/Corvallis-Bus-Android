@@ -1,4 +1,4 @@
-package osu.appclub.corvallisbus;
+package osu.appclub.corvallisbus.alerts;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -7,12 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import org.mcsoxford.rss.RSSItem;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Locale;
 
 import osu.appclub.corvallisbus.models.AlertsItem;
 

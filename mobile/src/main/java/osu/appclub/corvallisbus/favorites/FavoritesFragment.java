@@ -1,29 +1,20 @@
-package osu.appclub.corvallisbus;
+package osu.appclub.corvallisbus.favorites;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.ListFragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import osu.appclub.corvallisbus.LocationProvider;
+import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 
