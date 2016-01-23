@@ -28,8 +28,8 @@ import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 
 
-public class FavoritesFragment extends ListFragment {
-    GoogleApiClient apiClient;
+public class FavoritesFragment extends ListFragment implements LocationProvider.LocationAvailableListener {
+    LocationProvider locationProvider;
     ArrayList<FavoriteStopViewModel> listItems = new ArrayList<>();
     FavoritesListAdapter adapter;
     SwipeRefreshLayout swipeRefreshLayout;
@@ -65,6 +65,12 @@ public class FavoritesFragment extends ListFragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        if (getActivity() instanceof LocationProvider) {
+            locationProvider = (LocationProvider) getActivity();
+        } else {
+            throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements LocationProvider");
+        }
+
         adapter = new FavoritesListAdapter(getActivity(), listItems);
         getListView().setAdapter(adapter);
 
@@ -84,45 +90,19 @@ public class FavoritesFragment extends ListFragment {
      * sending it off to the network to get the user's favorite stops.
      */
     public void startLoadingFavorites() {
-        if (apiClient == null) {
-            GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
-                @Override
-                public void onConnected(Bundle bundle) {
-                    if (apiClient == null) {
-                        // failure
-                        return;
-                    }
-
-                    int permissionValue = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION);
-                    if (permissionValue == PackageManager.PERMISSION_GRANTED) {
-                        Location location = LocationServices.FusedLocationApi.getLastLocation(apiClient);
-                        startFavoritesDownloadTask(location);
-                    }
-                }
-
-                @Override
-                public void onConnectionSuspended(int i) {
-
-                }
-            };
-
-            GoogleApiClient.OnConnectionFailedListener failedListener = new GoogleApiClient.OnConnectionFailedListener() {
-                @Override
-                public void onConnectionFailed(@NotNull ConnectionResult connectionResult) {
-                    // not sure what to do here
-                }
-            };
-
-            apiClient = new GoogleApiClient.Builder(getActivity())
-                    .addConnectionCallbacks(connectionCallbacks)
-                    .addOnConnectionFailedListener(failedListener)
-                    .addApi(LocationServices.API)
-                    .build();
-        } else if (apiClient.isConnected()) {
-            Location location = LocationServices.FusedLocationApi.getLastLocation(apiClient);
+        if (locationProvider.isLocationAvailable()) {
+            Location location = locationProvider.getUserLocation();
             startFavoritesDownloadTask(location);
+        } else {
+            locationProvider.addLocationAvailableListener(this);
         }
+    }
 
+    @Override
+    public void onLocationAvailable(LocationProvider provider) {
+        provider.removeLocationAvailableListener(this);
+        Location location = provider.getUserLocation();
+        startFavoritesDownloadTask(location);
     }
 
     public void startFavoritesDownloadTask(final Location location) {
@@ -157,27 +137,5 @@ public class FavoritesFragment extends ListFragment {
             }
         };
         task.execute();
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-    }
-
-    @Override
-    public void onStart() {
-        if (apiClient != null) { apiClient.connect(); }
-        super.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        if (apiClient != null) { apiClient.disconnect(); }
-        super.onStop();
     }
 }

@@ -1,5 +1,7 @@
 package osu.appclub.corvallisbus;
 
+import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -12,44 +14,128 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderApi;
+import com.google.android.gms.location.LocationServices;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.models.BusStaticData;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
-
-    //Main toolbar
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationProvider {
+    private GoogleApiClient apiClient;
     private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //Setup initial UI and Toolbar setup
+
+        // Kick off static data download task so it can be accessed quickly later
+        new AsyncTask<Void, Void, BusStaticData>() {
+            @Override
+            protected BusStaticData doInBackground(Void... params) {
+                return CorvallisBusAPIClient.getStaticData();
+            }
+        }.execute();
+
+        // initial UI and Toolbar setup
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle("Favorites");
         setSupportActionBar(toolbar);
 
-        //Get our Fragment Manager and begin fragment transaction
+        // Load the Favorites Fragment
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
 
-        //Load the Favorites Fragment
         FavoritesFragment favoritesFragment = new FavoritesFragment();
         ft.replace(R.id.content_frame, favoritesFragment);
         ft.commit();
 
-        //Navigation Drawer
+        // Navigation Drawer
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        //Navigation View
+        // Navigation View
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        apiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (apiClient != null) {
+            apiClient.connect();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (apiClient != null) {
+            apiClient.disconnect();
+        }
+    }
+
+    @Override
+    public boolean isLocationAvailable() {
+        return apiClient != null && apiClient.isConnected();
+    }
+
+    @Override
+    public Location getUserLocation() {
+        try {
+            return LocationServices.FusedLocationApi.getLastLocation(apiClient);
+        }
+        catch (SecurityException e) {
+            Log.d("osu.appclub", e.getMessage());
+            return null;
+        }
+    }
+
+    private final List<LocationAvailableListener> locationListeners = new ArrayList<>();
+    @Override
+    public void addLocationAvailableListener(LocationAvailableListener listener) {
+        locationListeners.add(listener);
+    }
+
+    @Override
+    public void removeLocationAvailableListener(LocationAvailableListener listener) {
+        locationListeners.remove(listener);
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        for (LocationAvailableListener listener : locationListeners) {
+            listener.onLocationAvailable(this);
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.d("osu.appclub", "API client connection failed: " + connectionResult);
     }
 
     @Override
@@ -129,8 +215,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return settingsFragment;
     }
 
-    //This function will switch our current view fragment
-    @SuppressWarnings("StatementWithEmptyBody")
+    // Switches the displayed fragment to the fragment given by the id parameter.
     private void displayView(int id) {
         Fragment newFragment;
         switch (id) {

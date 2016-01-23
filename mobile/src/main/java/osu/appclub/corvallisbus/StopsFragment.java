@@ -19,6 +19,8 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -42,11 +44,11 @@ import osu.appclub.corvallisbus.models.StopDetailsViewModel;
 
 public class StopsFragment extends ListFragment implements BusMapPresenter.OnStopSelectedListener {
     MapView mapView;
-    TextView textStopName;
     BusMapPresenter mapPresenter;
+    TextView textStopName;
 
     StopDetailsListAdapter listAdapter;
-    ArrayList<RouteDetailsViewModel> listItems = new ArrayList<>();
+    final ArrayList<RouteDetailsViewModel> listItems = new ArrayList<>();
 
     //Required empty public constructor
     public StopsFragment() {
@@ -73,16 +75,19 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
         textStopName = (TextView) getActivity().findViewById(R.id.stopName);
+
+        if (getActivity() instanceof LocationProvider) {
+            mapPresenter = new BusMapPresenter((LocationProvider) getActivity());
+        } else {
+            throw new UnsupportedOperationException("Stops fragment must be attached to an activity implementing LocationProvider");
+        }
+        mapPresenter.stopSelectedListener = this;
+
         mapView = (MapView) getActivity().findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap googleMap) {
-                mapPresenter = new BusMapPresenter(googleMap);
-                mapPresenter.stopSelectedListener = StopsFragment.this;
-            }
-        });
+        mapView.getMapAsync(mapPresenter);
 
         listAdapter = new StopDetailsListAdapter(getActivity(), listItems);
         setListAdapter(listAdapter);
@@ -113,16 +118,6 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
                 listAdapter.notifyDataSetChanged();
             }
         }.execute();
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
     }
 
     @Override
