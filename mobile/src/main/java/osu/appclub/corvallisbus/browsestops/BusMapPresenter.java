@@ -8,6 +8,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import osu.appclub.corvallisbus.LocationProvider;
+import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.BusStop;
@@ -29,6 +31,9 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     private GoogleMap googleMap;
     private final Map<Marker, BusStop> markersLookup = new HashMap<>();
 
+    BitmapDescriptor green_icon;
+    BitmapDescriptor green_selected_icon;
+
     public OnStopSelectedListener stopSelectedListener;
 
     public BusMapPresenter(LocationProvider locationProvider) {
@@ -38,6 +43,9 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
+
+        green_icon = BitmapDescriptorFactory.fromResource(R.drawable.greenoval);
+        green_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.greenoval_highlighted_big);
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.56802, -123.27926), 14.0f));
 
@@ -83,11 +91,11 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
             protected void onPostExecute(BusStaticData busStaticData) {
 
                 MarkerOptions options = new MarkerOptions();
-                //BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable)
                 for (int i = 0; i < busStaticData.stops.size(); i++) {
                     BusStop busStop = busStaticData.stops.valueAt(i);
 
                     options.position(busStop.location);
+                    options.icon(green_icon);
                     // TODO: options.icon...
                     Marker marker = googleMap.addMarker(options);
                     markersLookup.put(marker, busStop);
@@ -96,8 +104,15 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         }.execute();
     }
 
+    Marker previousMarker;
     @Override
     public boolean onMarkerClick(Marker marker) {
+        if (previousMarker != null) {
+            previousMarker.setIcon(green_icon);
+        }
+        marker.setIcon(green_selected_icon);
+        previousMarker = marker;
+
         BusStop busStop = markersLookup.get(marker);
         if (stopSelectedListener != null) {
             stopSelectedListener.onStopSelected(busStop.id);
