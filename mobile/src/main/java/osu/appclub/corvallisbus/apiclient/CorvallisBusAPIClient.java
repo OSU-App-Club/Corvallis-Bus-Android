@@ -128,12 +128,12 @@ public final class CorvallisBusAPIClient {
     }
 
     @Nullable
-    public static StopDetailsViewModel getStopDetailsViewModel(int stopId) {
+    public static StopDetailsViewModel getStopDetailsViewModel(int stopId, List<Integer> favoriteStopIds) {
         BusStaticData staticData = getStaticData();
         List<RouteArrivalsSummary> arrivalsSummaries = getRouteArrivalsSummary(stopId);
 
         if (staticData != null && arrivalsSummaries != null) {
-            return new StopDetailsViewModel(stopId, staticData, arrivalsSummaries);
+            return new StopDetailsViewModel(stopId, staticData, arrivalsSummaries, favoriteStopIds);
         }
 
         return null;

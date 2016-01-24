@@ -1,8 +1,11 @@
 package osu.appclub.corvallisbus.browsestops;
 
+import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -27,6 +30,7 @@ import osu.appclub.corvallisbus.models.BusStop;
  * Created by rikkigibson on 1/20/16.
  */
 public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.LocationAvailableListener, GoogleMap.OnMarkerClickListener {
+    private final Context context;
     private final LocationProvider locationProvider;
     private GoogleMap googleMap;
     private final Map<Marker, BusStop> markersLookup = new HashMap<>();
@@ -36,7 +40,8 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
     public OnStopSelectedListener stopSelectedListener;
 
-    public BusMapPresenter(LocationProvider locationProvider) {
+    public BusMapPresenter(Context context, LocationProvider locationProvider) {
+        this.context = context;
         this.locationProvider = locationProvider;
     }
 
@@ -90,7 +95,12 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
             }
 
             @Override
-            protected void onPostExecute(BusStaticData busStaticData) {
+            protected void onPostExecute(@Nullable BusStaticData busStaticData) {
+                if (busStaticData == null) {
+                    Toast.makeText(context, "Failed to load bus stops", Toast.LENGTH_SHORT)
+                            .show();
+                    return;
+                }
 
                 MarkerOptions options = new MarkerOptions();
                 for (int i = 0; i < busStaticData.stops.size(); i++) {

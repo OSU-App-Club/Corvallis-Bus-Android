@@ -1,5 +1,7 @@
 package osu.appclub.corvallisbus.favorites;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,7 +14,9 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.Preferences;
 
+import osu.appclub.corvallisbus.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
@@ -97,15 +101,13 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     }
 
     public void startFavoritesDownloadTask(final Location location) {
+        final CorvallisBusPreferences preferences = new CorvallisBusPreferences(getActivity());
+        final List<Integer> stopIds = preferences.getFavoriteStopIds();
+
         AsyncTask<Void, Void, List<FavoriteStopViewModel>> task = new AsyncTask<Void, Void, List<FavoriteStopViewModel>>() {
             @Override
             protected List<FavoriteStopViewModel> doInBackground(Void... params) {
-                ArrayList<Integer> testStops = new ArrayList<>();
-                testStops.add(11776);
-                testStops.add(10308);
-                testStops.add(10003);
-
-                return CorvallisBusAPIClient.getFavoriteStops(testStops, location);
+                return CorvallisBusAPIClient.getFavoriteStops(stopIds, location);
             }
 
             @Override

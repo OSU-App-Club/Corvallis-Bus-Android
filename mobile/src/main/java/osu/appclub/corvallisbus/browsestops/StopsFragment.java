@@ -1,6 +1,8 @@
 package osu.appclub.corvallisbus.browsestops;
 
+import android.content.Context;
 import android.content.res.ColorStateList;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -15,7 +17,9 @@ import android.widget.Toast;
 import com.google.android.gms.maps.MapView;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import osu.appclub.corvallisbus.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
@@ -61,10 +65,14 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
         floatingActionButton = (FloatingActionButton) getActivity().findViewById(R.id.fab);
         floatingActionButton.setOnClickListener(this);
+
+        // A stop must be selected before enabling the favorite button
+        floatingActionButton.setEnabled(false);
+
         textStopName = (TextView) getActivity().findViewById(R.id.stopName);
 
         if (getActivity() instanceof LocationProvider) {
-            mapPresenter = new BusMapPresenter((LocationProvider) getActivity());
+            mapPresenter = new BusMapPresenter(getActivity(), (LocationProvider)getActivity());
         } else {
             throw new UnsupportedOperationException("Stops fragment must be attached to an activity implementing LocationProvider");
         }
@@ -85,29 +93,52 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     public void onClick(View v) {
         viewModel.isFavorite = !viewModel.isFavorite;
 
-        ColorStateList colorStateList = ColorStateList.valueOf(viewModel.isFavorite
+        CorvallisBusPreferences preferences = new CorvallisBusPreferences(getActivity());
+        List<Integer> favoriteStopIds = preferences.getFavoriteStopIds();
+
+        if (viewModel.isFavorite) {
+            favoriteStopIds.add(viewModel.stopId);
+        }
+        else {
+            favoriteStopIds.remove((Integer)viewModel.stopId);
+        }
+
+        preferences.setFavoriteStopIds(favoriteStopIds);
+
+        updateFavoriteButtonState(viewModel.isFavorite);
+    }
+
+    public void updateFavoriteButtonState(boolean isFavorite) {
+        floatingActionButton.setEnabled(true);
+
+        ColorStateList colorStateList = ColorStateList.valueOf(isFavorite
                 ? ContextCompat.getColor(getActivity(), R.color.colorFavorite)
                 : ContextCompat.getColor(getActivity(), R.color.colorAccent));
 
         floatingActionButton.setBackgroundTintList(colorStateList);
     }
-
     public void onStopSelected(int stopId) {
         startLoadingArrivals(stopId);
     }
 
     public void startLoadingArrivals(final int stopId) {
+        // TODO: make corvallisbusapiclient an instance class or something
+        final CorvallisBusPreferences preferences = new CorvallisBusPreferences(getActivity());
+        final List<Integer> favoriteStopIds = preferences.getFavoriteStopIds();
+
         new AsyncTask<Void, Void, StopDetailsViewModel>() {
 
             @Override
             protected StopDetailsViewModel doInBackground(Void... params) {
-                return CorvallisBusAPIClient.getStopDetailsViewModel(stopId);
+                // TODO: this method needs to move into CorvallisBusManager or something
+                return CorvallisBusAPIClient.getStopDetailsViewModel(stopId, favoriteStopIds);
             }
 
             @Override
             protected void onPostExecute(StopDetailsViewModel stopDetailsViewModel) {
                 StopsFragment.this.viewModel = stopDetailsViewModel;
 
+                updateFavoriteButtonState(stopDetailsViewModel.isFavorite);
                 textStopName.setText(stopDetailsViewModel == null
                         ? ""
                         : stopDetailsViewModel.stopName);
