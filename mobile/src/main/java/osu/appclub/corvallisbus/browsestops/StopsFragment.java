@@ -1,12 +1,16 @@
 package osu.appclub.corvallisbus.browsestops;
 
+import android.content.res.ColorStateList;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ListFragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.MapView;
 
@@ -18,10 +22,13 @@ import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
 import osu.appclub.corvallisbus.models.StopDetailsViewModel;
 
-public class StopsFragment extends ListFragment implements BusMapPresenter.OnStopSelectedListener {
+public class StopsFragment extends ListFragment implements BusMapPresenter.OnStopSelectedListener, FloatingActionButton.OnClickListener {
     MapView mapView;
     BusMapPresenter mapPresenter;
     TextView textStopName;
+    FloatingActionButton floatingActionButton;
+
+    StopDetailsViewModel viewModel = new StopDetailsViewModel();
 
     StopDetailsListAdapter listAdapter;
     final ArrayList<RouteDetailsViewModel> listItems = new ArrayList<>();
@@ -52,6 +59,8 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        floatingActionButton = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        floatingActionButton.setOnClickListener(this);
         textStopName = (TextView) getActivity().findViewById(R.id.stopName);
 
         if (getActivity() instanceof LocationProvider) {
@@ -69,6 +78,20 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         setListAdapter(listAdapter);
     }
 
+    /**
+     * FloatingActionButton.OnClickListener
+     */
+    @Override
+    public void onClick(View v) {
+        viewModel.isFavorite = !viewModel.isFavorite;
+
+        ColorStateList colorStateList = ColorStateList.valueOf(viewModel.isFavorite
+                ? ContextCompat.getColor(getActivity(), R.color.colorFavorite)
+                : ContextCompat.getColor(getActivity(), R.color.colorAccent));
+
+        floatingActionButton.setBackgroundTintList(colorStateList);
+    }
+
     public void onStopSelected(int stopId) {
         startLoadingArrivals(stopId);
     }
@@ -83,6 +106,8 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
             @Override
             protected void onPostExecute(StopDetailsViewModel stopDetailsViewModel) {
+                StopsFragment.this.viewModel = stopDetailsViewModel;
+
                 textStopName.setText(stopDetailsViewModel == null
                         ? ""
                         : stopDetailsViewModel.stopName);

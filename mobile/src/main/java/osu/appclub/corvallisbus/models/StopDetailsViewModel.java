@@ -11,6 +11,11 @@ import java.util.List;
 public class StopDetailsViewModel {
     public String stopName;
     public List<RouteDetailsViewModel> routeDetailsList;
+    public boolean isFavorite;
+
+    public StopDetailsViewModel() {
+
+    }
 
     public StopDetailsViewModel(int stopId, BusStaticData staticData, List<RouteArrivalsSummary> arrivalsSummaries) {
         stopName = staticData.stops.get(stopId).name;
