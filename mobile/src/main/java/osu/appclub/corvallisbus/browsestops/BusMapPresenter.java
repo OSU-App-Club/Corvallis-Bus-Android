@@ -75,9 +75,11 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
     void updateUserLocation() {
         Location location = locationProvider.getUserLocation();
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        CameraUpdate update = CameraUpdateFactory.newLatLng(latLng);
-        googleMap.moveCamera(update);
+        if (location != null) {
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            CameraUpdate update = CameraUpdateFactory.newLatLng(latLng);
+            googleMap.moveCamera(update);
+        }
     }
 
     void initMarkers() {
