@@ -93,8 +93,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     public void onClick(View v) {
         viewModel.isFavorite = !viewModel.isFavorite;
 
-        CorvallisBusPreferences preferences = new CorvallisBusPreferences(getActivity());
-        List<Integer> favoriteStopIds = preferences.getFavoriteStopIds();
+        List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(getActivity());
 
         if (viewModel.isFavorite) {
             favoriteStopIds.add(viewModel.stopId);
@@ -103,9 +102,10 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
             favoriteStopIds.remove((Integer)viewModel.stopId);
         }
 
-        preferences.setFavoriteStopIds(favoriteStopIds);
+        CorvallisBusPreferences.setFavoriteStopIds(getActivity(), favoriteStopIds);
 
         updateFavoriteButtonState(viewModel.isFavorite);
+        mapPresenter.setFavoritedStateForStop(viewModel.isFavorite, viewModel.stopId);
     }
 
     public void updateFavoriteButtonState(boolean isFavorite) {
@@ -122,9 +122,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     }
 
     public void startLoadingArrivals(final int stopId) {
-        // TODO: make corvallisbusapiclient an instance class or something
-        final CorvallisBusPreferences preferences = new CorvallisBusPreferences(getActivity());
-        final List<Integer> favoriteStopIds = preferences.getFavoriteStopIds();
+        final List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(getActivity());
 
         new AsyncTask<Void, Void, StopDetailsViewModel>() {
 
@@ -136,9 +134,11 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
             @Override
             protected void onPostExecute(StopDetailsViewModel stopDetailsViewModel) {
+                //
                 StopsFragment.this.viewModel = stopDetailsViewModel;
 
-                updateFavoriteButtonState(stopDetailsViewModel.isFavorite);
+                updateFavoriteButtonState(stopDetailsViewModel != null && stopDetailsViewModel.isFavorite);
+
                 textStopName.setText(stopDetailsViewModel == null
                         ? ""
                         : stopDetailsViewModel.stopName);

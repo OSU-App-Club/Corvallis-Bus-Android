@@ -14,25 +14,24 @@ import java.util.List;
  * Created by rikkigibson on 1/23/16.
  */
 public class CorvallisBusPreferences {
-    private final Context context;
     private static final Gson gson = new Gson();
 
     public static final String PREFERENCES_KEY = "osu.appclub.corvallisbus";
     public static final String FAVORITE_STOPS_KEY = "favoriteStops";
 
-    public CorvallisBusPreferences(Context context) {
-        this.context = context;
+    private CorvallisBusPreferences() {
+
     }
 
     private static final Type INTEGER_LIST_TYPE = new TypeToken<List<Integer>>(){}.getType();
-    public List<Integer> getFavoriteStopIds() {
+    public static List<Integer> getFavoriteStopIds(@NonNull Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
         String favoriteStopsJson = sharedPreferences.getString(FAVORITE_STOPS_KEY, "[]");
         List<Integer> favoriteStops = gson.fromJson(favoriteStopsJson, INTEGER_LIST_TYPE);
         return favoriteStops;
     }
 
-    public void setFavoriteStopIds(@NonNull List<Integer> favoriteStopIds) {
+    public static void setFavoriteStopIds(@NonNull Context context, @NonNull List<Integer> favoriteStopIds) {
         SharedPreferences.Editor preferencesEditor = context.getSharedPreferences(PREFERENCES_KEY, 0).edit();
         String favoriteStopsJson = gson.toJson(favoriteStopIds);
         preferencesEditor.putString(FAVORITE_STOPS_KEY, favoriteStopsJson);

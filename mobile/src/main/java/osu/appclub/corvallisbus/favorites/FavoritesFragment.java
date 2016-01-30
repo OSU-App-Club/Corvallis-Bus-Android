@@ -101,8 +101,7 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     }
 
     public void startFavoritesDownloadTask(final Location location) {
-        final CorvallisBusPreferences preferences = new CorvallisBusPreferences(getActivity());
-        final List<Integer> stopIds = preferences.getFavoriteStopIds();
+        final List<Integer> stopIds = CorvallisBusPreferences.getFavoriteStopIds(getActivity());
 
         AsyncTask<Void, Void, List<FavoriteStopViewModel>> task = new AsyncTask<Void, Void, List<FavoriteStopViewModel>>() {
             @Override

@@ -5,6 +5,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.util.SparseArray;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -18,8 +19,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import osu.appclub.corvallisbus.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
@@ -37,6 +40,8 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
     BitmapDescriptor green_icon;
     BitmapDescriptor green_selected_icon;
+    BitmapDescriptor gold_icon;
+    BitmapDescriptor gold_selected_icon;
 
     public OnStopSelectedListener stopSelectedListener;
 
@@ -45,12 +50,17 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         this.locationProvider = locationProvider;
     }
 
+    /**
+     * OnMapReadyCallback
+     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
 
         green_icon = BitmapDescriptorFactory.fromResource(R.drawable.greenoval);
         green_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.greenoval_highlighted_big);
+        gold_icon = BitmapDescriptorFactory.fromResource(R.drawable.goldoval);
+        gold_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.goldoval_highlighted_big);
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.56802, -123.27926), 14.0f));
 
@@ -72,6 +82,9 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         initMarkers();
     }
 
+    /**
+     * LocationProvider.LocationAvailableListener
+     */
     @Override
     public void onLocationAvailable(LocationProvider provider) {
         provider.removeLocationAvailableListener(this);
@@ -102,35 +115,70 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
                     return;
                 }
 
-                MarkerOptions options = new MarkerOptions();
-                for (int i = 0; i < busStaticData.stops.size(); i++) {
-                    BusStop busStop = busStaticData.stops.valueAt(i);
-
-                    options.position(busStop.location);
-                    options.icon(green_icon);
-                    // TODO: options.icon...
-                    Marker marker = googleMap.addMarker(options);
-                    markersLookup.put(marker, busStop);
-                }
+                createMarkers(busStaticData.stops);
             }
         }.execute();
     }
 
-    Marker previousMarker;
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        if (previousMarker != null) {
-            previousMarker.setIcon(green_icon);
-        }
-        marker.setIcon(green_selected_icon);
-        previousMarker = marker;
+    void createMarkers(SparseArray<BusStop> busStops) {
+        List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
 
-        BusStop busStop = markersLookup.get(marker);
+        MarkerOptions options = new MarkerOptions();
+        for (int i = 0; i < busStops.size(); i++) {
+            BusStop busStop = busStops.valueAt(i);
+
+            options.position(busStop.location);
+            options.icon(favoriteStopIds.contains(busStop.id)
+                ? gold_icon
+                : green_icon);
+            Marker marker = googleMap.addMarker(options);
+            markersLookup.put(marker, busStop);
+        }
+    }
+
+    Marker currentMarker;
+
+    /**
+     * GoogleMap.OnMarkerClickListener
+     */
+    @Override
+    public boolean onMarkerClick(Marker newMarker) {
+        List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
+
+        if (currentMarker != null) {
+            boolean currentStopIsFavorite = favoriteStopIds.contains(markersLookup.get(currentMarker).id);
+            currentMarker.setIcon(currentStopIsFavorite ? gold_icon : green_icon);
+        }
+        currentMarker = newMarker;
+
+        BusStop busStop = markersLookup.get(newMarker);
+        boolean isFavorite = favoriteStopIds.contains(busStop.id);
+
+        newMarker.setIcon(isFavorite ? gold_selected_icon : green_selected_icon);
+
         if (stopSelectedListener != null) {
             stopSelectedListener.onStopSelected(busStop.id);
         }
 
         return true;
+    }
+
+    public void setFavoritedStateForStop(boolean isFavorite, int stopId) {
+        for (Map.Entry<Marker, BusStop> entry : markersLookup.entrySet()) {
+            if (entry.getValue().id == stopId) {
+                boolean isSelected = currentMarker.equals(entry.getKey());
+
+                final BitmapDescriptor newIcon;
+                if (isSelected) {
+                    newIcon = isFavorite ? gold_selected_icon : green_selected_icon;
+                } else {
+                    newIcon = isFavorite ? gold_icon : green_icon;
+                }
+
+                entry.getKey().setIcon(newIcon);
+                break;
+            }
+        }
     }
 
     public interface OnStopSelectedListener {
