@@ -10,21 +10,25 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
 
+import osu.appclub.corvallisbus.BusStopDetailsPresenter;
 import osu.appclub.corvallisbus.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 
 
 public class FavoritesFragment extends ListFragment implements LocationProvider.LocationAvailableListener {
     LocationProvider locationProvider;
+    BusStopDetailsPresenter detailsPresenter;
     ArrayList<FavoriteStopViewModel> listItems = new ArrayList<>();
     FavoritesListAdapter adapter;
     SwipeRefreshLayout swipeRefreshLayout;
@@ -66,6 +70,12 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
             throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements LocationProvider");
         }
 
+        if (getActivity() instanceof BusStopDetailsPresenter) {
+            detailsPresenter = (BusStopDetailsPresenter) getActivity();
+        } else {
+            throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements BusStopDetailsPresenter");
+        }
+
         adapter = new FavoritesListAdapter(getActivity(), listItems);
         getListView().setAdapter(adapter);
 
@@ -78,6 +88,12 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
         });
 
         startLoadingFavorites();
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        FavoriteStopViewModel selectedStop = listItems.get(position);
+        detailsPresenter.presentBusStop(selectedStop.stopID);
     }
 
     /**

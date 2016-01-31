@@ -5,6 +5,7 @@ import android.content.res.ColorStateList;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ListFragment;
 import android.support.v4.content.ContextCompat;
@@ -31,6 +32,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     BusMapPresenter mapPresenter;
     TextView textStopName;
     FloatingActionButton floatingActionButton;
+    Context context;
 
     StopDetailsViewModel viewModel = new StopDetailsViewModel();
 
@@ -51,6 +53,12 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.context = context;
     }
 
     @Override
@@ -77,6 +85,10 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
             throw new UnsupportedOperationException("Stops fragment must be attached to an activity implementing LocationProvider");
         }
         mapPresenter.stopSelectedListener = this;
+        if (stopIdToPresent != null) {
+            mapPresenter.presentBusStop(stopIdToPresent);
+            stopIdToPresent = null;
+        }
 
         mapView = (MapView) getActivity().findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
@@ -86,6 +98,29 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         setListAdapter(listAdapter);
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        // This prevents accidentally calling presentBusStop on a mapPresenter
+        // from the...previous "iteration" of this fragment.
+        // Google "android fragment lifecycle". Bring tissues for the probably ensuing tears.
+        mapPresenter = null;
+
+        // Prevent list items from showing up without any other views having content
+        listItems.clear();
+    }
+
+    @Nullable
+    Integer stopIdToPresent = null;
+    public void presentBusStop(int stopId) {
+        if (mapPresenter != null) {
+            mapPresenter.presentBusStop(stopId);
+        } else {
+            stopIdToPresent = stopId;
+        }
+    }
+
     /**
      * FloatingActionButton.OnClickListener
      */
@@ -93,7 +128,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     public void onClick(View v) {
         viewModel.isFavorite = !viewModel.isFavorite;
 
-        List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(getActivity());
+        List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
 
         if (viewModel.isFavorite) {
             favoriteStopIds.add(viewModel.stopId);
@@ -102,7 +137,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
             favoriteStopIds.remove((Integer)viewModel.stopId);
         }
 
-        CorvallisBusPreferences.setFavoriteStopIds(getActivity(), favoriteStopIds);
+        CorvallisBusPreferences.setFavoriteStopIds(context, favoriteStopIds);
 
         updateFavoriteButtonState(viewModel.isFavorite);
         mapPresenter.setFavoritedStateForStop(viewModel.isFavorite, viewModel.stopId);
@@ -112,8 +147,8 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         floatingActionButton.setEnabled(true);
 
         ColorStateList colorStateList = ColorStateList.valueOf(isFavorite
-                ? ContextCompat.getColor(getActivity(), R.color.colorFavorite)
-                : ContextCompat.getColor(getActivity(), R.color.colorAccent));
+                ? ContextCompat.getColor(context, R.color.colorFavorite)
+                : ContextCompat.getColor(context, R.color.colorAccent));
 
         floatingActionButton.setBackgroundTintList(colorStateList);
     }
@@ -122,7 +157,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     }
 
     public void startLoadingArrivals(final int stopId) {
-        final List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(getActivity());
+        final List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
 
         new AsyncTask<Void, Void, StopDetailsViewModel>() {
 
@@ -134,7 +169,6 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
             @Override
             protected void onPostExecute(StopDetailsViewModel stopDetailsViewModel) {
-                //
                 StopsFragment.this.viewModel = stopDetailsViewModel;
 
                 updateFavoriteButtonState(stopDetailsViewModel != null && stopDetailsViewModel.isFavorite);

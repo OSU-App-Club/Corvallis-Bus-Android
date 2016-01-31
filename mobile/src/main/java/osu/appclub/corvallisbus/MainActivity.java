@@ -37,7 +37,7 @@ import osu.appclub.corvallisbus.favorites.FavoritesFragment;
 import osu.appclub.corvallisbus.models.BusStaticData;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationProvider {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopDetailsPresenter {
     private GoogleApiClient apiClient;
     private Toolbar toolbar;
 
@@ -279,5 +279,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //Replace current fragment
         ft.replace(R.id.content_frame, newFragment);
         ft.commit();
+    }
+
+    /**
+     * BusStopDetailsPresenter
+     */
+    @Override
+    public void presentBusStop(int stopId) {
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        // For now just assume the item at index 1 is the stops view
+        // TODO: make this more robust/nicer
+        MenuItem item = navigationView.getMenu().getItem(1);
+        item.setChecked(true);
+        displayView(R.id.nav_stops);
+        stopsFragment.presentBusStop(stopId);
     }
 }

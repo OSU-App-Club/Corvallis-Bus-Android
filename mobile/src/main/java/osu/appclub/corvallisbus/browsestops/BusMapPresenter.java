@@ -116,6 +116,10 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
                 }
 
                 createMarkers(busStaticData.stops);
+                if (stopIdToPresent != null) {
+                    presentBusStop(stopIdToPresent);
+                    stopIdToPresent = null;
+                }
             }
         }.execute();
     }
@@ -143,6 +147,11 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
      */
     @Override
     public boolean onMarkerClick(Marker newMarker) {
+        selectMarker(newMarker);
+        return true;
+    }
+
+    void selectMarker(Marker newMarker) {
         List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
 
         if (currentMarker != null) {
@@ -159,26 +168,54 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         if (stopSelectedListener != null) {
             stopSelectedListener.onStopSelected(busStop.id);
         }
+    }
 
-        return true;
+    @Nullable
+    Marker getMarkerByStopId(int stopId) {
+        for (Map.Entry<Marker, BusStop> entry : markersLookup.entrySet()) {
+            if (entry.getValue().id == stopId) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     public void setFavoritedStateForStop(boolean isFavorite, int stopId) {
-        for (Map.Entry<Marker, BusStop> entry : markersLookup.entrySet()) {
-            if (entry.getValue().id == stopId) {
-                boolean isSelected = currentMarker.equals(entry.getKey());
+        Marker marker = getMarkerByStopId(stopId);
+        if (marker != null) {
+            boolean isSelected = currentMarker.equals(marker);
 
-                final BitmapDescriptor newIcon;
-                if (isSelected) {
-                    newIcon = isFavorite ? gold_selected_icon : green_selected_icon;
-                } else {
-                    newIcon = isFavorite ? gold_icon : green_icon;
-                }
+            final BitmapDescriptor newIcon;
+            if (isSelected) {
+                newIcon = isFavorite ? gold_selected_icon : green_selected_icon;
+            } else {
+                newIcon = isFavorite ? gold_icon : green_icon;
+            }
 
-                entry.getKey().setIcon(newIcon);
-                break;
+            marker.setIcon(newIcon);
+        }
+    }
+
+    @Nullable
+    BusStop getStopById(int stopId) {
+        for (BusStop stop : markersLookup.values()) {
+            if (stop.id == stopId) {
+                return stop;
             }
         }
+        return null;
+    }
+
+    @Nullable
+    Integer stopIdToPresent = null;
+    public void presentBusStop(int stopId) {
+        Marker marker = getMarkerByStopId(stopId);
+        if (marker == null) {
+            stopIdToPresent = stopId;
+            return;
+        }
+        selectMarker(marker);
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
     }
 
     public interface OnStopSelectedListener {
