@@ -29,6 +29,8 @@ import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import osu.appclub.corvallisbus.alerts.AlertsFragment;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
@@ -37,7 +39,7 @@ import osu.appclub.corvallisbus.favorites.FavoritesFragment;
 import osu.appclub.corvallisbus.models.BusStaticData;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopDetailsPresenter {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopSelectionQueue {
     private GoogleApiClient apiClient;
     private Toolbar toolbar;
 
@@ -281,11 +283,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         ft.commit();
     }
 
-    /**
-     * BusStopDetailsPresenter
-     */
-    @Override
-    public void presentBusStop(int stopId) {
+    public void displayStopsFragment() {
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
         // For now just assume the item at index 1 is the stops view
@@ -293,6 +291,34 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         MenuItem item = navigationView.getMenu().getItem(1);
         item.setChecked(true);
         displayView(R.id.nav_stops);
-        stopsFragment.presentBusStop(stopId);
+    }
+
+    /**
+     * BusStopSelectionQueue
+     */
+    BusStopSelectionQueue.Listener stopDetailsListener;
+    @Override
+    public void setStopDetailsQueueListener(@Nullable Listener listener) {
+        stopDetailsListener = listener;
+    }
+
+    private Queue<Integer> busStopQueue = new ArrayBlockingQueue<>(1);
+    @Override
+    public void enqueueBusStop(int stopId) {
+        busStopQueue.offer(stopId);
+        displayStopsFragment();
+        if (stopDetailsListener != null) {
+            stopDetailsListener.onEnqueueBusStop(this);
+        }
+    }
+
+    @Nullable
+    public Integer dequeueBusStopId() {
+        return busStopQueue.poll();
+    }
+
+    @Nullable
+    public Integer peekBusStopId() {
+        return busStopQueue.peek();
     }
 }

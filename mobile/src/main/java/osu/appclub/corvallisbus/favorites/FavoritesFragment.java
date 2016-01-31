@@ -1,7 +1,5 @@
 package osu.appclub.corvallisbus.favorites;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -15,20 +13,18 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.Preferences;
 
-import osu.appclub.corvallisbus.BusStopDetailsPresenter;
+import osu.appclub.corvallisbus.BusStopSelectionQueue;
 import osu.appclub.corvallisbus.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
-import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 
 
 public class FavoritesFragment extends ListFragment implements LocationProvider.LocationAvailableListener {
     LocationProvider locationProvider;
-    BusStopDetailsPresenter detailsPresenter;
+    BusStopSelectionQueue stopSelectionQueue;
     ArrayList<FavoriteStopViewModel> listItems = new ArrayList<>();
     FavoritesListAdapter adapter;
     SwipeRefreshLayout swipeRefreshLayout;
@@ -67,13 +63,13 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
         if (getActivity() instanceof LocationProvider) {
             locationProvider = (LocationProvider) getActivity();
         } else {
-            throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements LocationProvider");
+            throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements LocationProvider.");
         }
 
-        if (getActivity() instanceof BusStopDetailsPresenter) {
-            detailsPresenter = (BusStopDetailsPresenter) getActivity();
+        if (getActivity() instanceof BusStopSelectionQueue) {
+            stopSelectionQueue = (BusStopSelectionQueue) getActivity();
         } else {
-            throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements BusStopDetailsPresenter");
+            throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements BusStopSelectionQueue.");
         }
 
         adapter = new FavoritesListAdapter(getActivity(), listItems);
@@ -93,7 +89,7 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         FavoriteStopViewModel selectedStop = listItems.get(position);
-        detailsPresenter.presentBusStop(selectedStop.stopID);
+        stopSelectionQueue.enqueueBusStop(selectedStop.stopID);
     }
 
     /**

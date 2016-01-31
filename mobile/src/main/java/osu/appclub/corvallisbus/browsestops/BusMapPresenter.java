@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import osu.appclub.corvallisbus.BusStopSelectionQueue;
 import osu.appclub.corvallisbus.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
@@ -32,11 +33,13 @@ import osu.appclub.corvallisbus.models.BusStop;
 /**
  * Created by rikkigibson on 1/20/16.
  */
-public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.LocationAvailableListener, GoogleMap.OnMarkerClickListener {
+public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.LocationAvailableListener,
+        GoogleMap.OnMarkerClickListener, BusStopSelectionQueue.Listener {
     private final Context context;
     private final LocationProvider locationProvider;
-    private GoogleMap googleMap;
     private final Map<Marker, BusStop> markersLookup = new HashMap<>();
+    private final BusStopSelectionQueue stopSelectionQueue;
+    private GoogleMap googleMap;
 
     BitmapDescriptor green_icon;
     BitmapDescriptor green_selected_icon;
@@ -45,9 +48,11 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
     public OnStopSelectedListener stopSelectedListener;
 
-    public BusMapPresenter(Context context, LocationProvider locationProvider) {
+    public BusMapPresenter(Context context, LocationProvider locationProvider, BusStopSelectionQueue stopSelectionQueue) {
         this.context = context;
         this.locationProvider = locationProvider;
+        this.stopSelectionQueue = stopSelectionQueue;
+        stopSelectionQueue.setStopDetailsQueueListener(this);
     }
 
     /**
@@ -116,10 +121,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
                 }
 
                 createMarkers(busStaticData.stops);
-                if (stopIdToPresent != null) {
-                    presentBusStop(stopIdToPresent);
-                    stopIdToPresent = null;
-                }
+                selectQueuedStopIfReady();
             }
         }.execute();
     }
@@ -196,26 +198,35 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         }
     }
 
-    @Nullable
-    BusStop getStopById(int stopId) {
-        for (BusStop stop : markersLookup.values()) {
-            if (stop.id == stopId) {
-                return stop;
-            }
-        }
-        return null;
+    public void onEnqueueBusStop(BusStopSelectionQueue queue) {
+        selectQueuedStopIfReady();
     }
 
-    @Nullable
-    Integer stopIdToPresent = null;
-    public void presentBusStop(int stopId) {
-        Marker marker = getMarkerByStopId(stopId);
-        if (marker == null) {
-            stopIdToPresent = stopId;
+    /**
+     * Selects the bus stop from the queue if the view is ready and there is a stop in the queue.
+     */
+    void selectQueuedStopIfReady() {
+        Integer stopId = stopSelectionQueue.peekBusStopId();
+        if (stopId == null) {
             return;
         }
+
+        Marker marker = getMarkerByStopId(stopId);
+        if (marker == null) {
+            return;
+        }
+
+        // Mark the stop id selection as consumed
+        stopSelectionQueue.dequeueBusStopId();
         selectMarker(marker);
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
+    }
+
+    /**
+     * Call when this presenter instance will no longer be used.
+     */
+    public void dispose() {
+        stopSelectionQueue.setStopDetailsQueueListener(null);
     }
 
     public interface OnStopSelectedListener {

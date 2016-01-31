@@ -2,7 +2,6 @@ package osu.appclub.corvallisbus.browsestops;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -13,13 +12,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.MapView;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import osu.appclub.corvallisbus.BusStopSelectionQueue;
 import osu.appclub.corvallisbus.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
@@ -79,16 +78,12 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
         textStopName = (TextView) getActivity().findViewById(R.id.stopName);
 
-        if (getActivity() instanceof LocationProvider) {
-            mapPresenter = new BusMapPresenter(getActivity(), (LocationProvider)getActivity());
+        if (getActivity() instanceof LocationProvider && getActivity() instanceof BusStopSelectionQueue) {
+            mapPresenter = new BusMapPresenter(getActivity(), (LocationProvider)getActivity(), (BusStopSelectionQueue)getActivity());
         } else {
-            throw new UnsupportedOperationException("Stops fragment must be attached to an activity implementing LocationProvider");
+            throw new UnsupportedOperationException("Stops fragment must be attached to an activity implementing LocationProvider and BusStopSelectionQueue.");
         }
         mapPresenter.stopSelectedListener = this;
-        if (stopIdToPresent != null) {
-            mapPresenter.presentBusStop(stopIdToPresent);
-            stopIdToPresent = null;
-        }
 
         mapView = (MapView) getActivity().findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
@@ -102,23 +97,14 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     public void onDestroyView() {
         super.onDestroyView();
 
-        // This prevents accidentally calling presentBusStop on a mapPresenter
+        // This prevents accidentally calling enqueueBusStop on a mapPresenter
         // from the...previous "iteration" of this fragment.
         // Google "android fragment lifecycle". Bring tissues for the probably ensuing tears.
+        mapPresenter.dispose();
         mapPresenter = null;
 
         // Prevent list items from showing up without any other views having content
         listItems.clear();
-    }
-
-    @Nullable
-    Integer stopIdToPresent = null;
-    public void presentBusStop(int stopId) {
-        if (mapPresenter != null) {
-            mapPresenter.presentBusStop(stopId);
-        } else {
-            stopIdToPresent = stopId;
-        }
     }
 
     /**
