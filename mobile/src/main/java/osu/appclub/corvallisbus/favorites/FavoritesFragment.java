@@ -3,8 +3,10 @@ package osu.appclub.corvallisbus.favorites;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,9 +27,11 @@ import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 public class FavoritesFragment extends ListFragment implements LocationProvider.LocationAvailableListener {
     LocationProvider locationProvider;
     BusStopSelectionQueue stopSelectionQueue;
-    ArrayList<FavoriteStopViewModel> listItems = new ArrayList<>();
+    final ArrayList<FavoriteStopViewModel> listItems = new ArrayList<>();
     FavoritesListAdapter adapter;
     SwipeRefreshLayout swipeRefreshLayout;
+
+    final Handler handler = new Handler();
 
     //Required empty public constructor
     public FavoritesFragment() {
@@ -52,8 +56,15 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onResume() {
+        super.onResume();
+        reloadFavoritesAtInterval();
+    }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        handler.removeCallbacks(reloadFavoritesRunnable);
     }
 
     @Override
@@ -82,7 +93,17 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
                 startLoadingFavorites();
             }
         });
+    }
 
+    final Runnable reloadFavoritesRunnable = new Runnable() {
+        @Override
+        public void run() {
+            reloadFavoritesAtInterval();
+        }
+    };
+
+    void reloadFavoritesAtInterval() {
+        handler.postDelayed(reloadFavoritesRunnable, 30000);
         startLoadingFavorites();
     }
 
@@ -118,6 +139,7 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
         AsyncTask<Void, Void, List<FavoriteStopViewModel>> task = new AsyncTask<Void, Void, List<FavoriteStopViewModel>>() {
             @Override
             protected List<FavoriteStopViewModel> doInBackground(Void... params) {
+                Log.d("osu.appclub", "Loading favorite stops from background thread");
                 return CorvallisBusAPIClient.getFavoriteStops(stopIds, location);
             }
 

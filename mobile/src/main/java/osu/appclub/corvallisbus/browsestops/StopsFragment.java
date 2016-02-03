@@ -36,7 +36,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
     Context context;
 
-    Handler handler = new Handler();
+    final Handler handler = new Handler();
 
     @Nullable
     Integer selectedStopId;
@@ -97,8 +97,6 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
         listAdapter = new StopDetailsListAdapter(getActivity(), routeDetailsList);
         setListAdapter(listAdapter);
-
-        reloadArrivalTimesAtInterval();
     }
 
     @Override
@@ -112,8 +110,6 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         mapPresenter = null;
 
         selectedStopId = null;
-
-        handler.removeCallbacks(reloadArrivalTimesRunnable);
 
         // Prevent list items from showing up without any other views having content
         routeDetailsList.clear();
@@ -171,7 +167,6 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     private final Runnable reloadArrivalTimesRunnable = new Runnable() {
         @Override
         public void run() {
-            startLoadingArrivals();
             reloadArrivalTimesAtInterval();
         }
     };
@@ -180,6 +175,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
      */
     private void reloadArrivalTimesAtInterval() {
         handler.postDelayed(reloadArrivalTimesRunnable, 30000);
+        startLoadingArrivals();
     }
 
     public void startLoadingArrivals() {
@@ -188,9 +184,9 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         }
 
         new AsyncTask<Void, Void, List<RouteDetailsViewModel>>() {
-
             @Override
             protected List<RouteDetailsViewModel> doInBackground(Void... params) {
+                Log.d("osu.appclub", "Loading route details from background thread.");
                 return CorvallisBusAPIClient.getRouteDetailsViewModels(selectedStopId);
             }
 
@@ -211,6 +207,8 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         if (mapView != null) {
             mapView.onResume();
         }
+
+        reloadArrivalTimesAtInterval();
     }
 
     @Override
@@ -219,6 +217,8 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         if (mapView != null) {
             mapView.onPause();
         }
+
+        handler.removeCallbacks(reloadArrivalTimesRunnable);
     }
 
     @Override
