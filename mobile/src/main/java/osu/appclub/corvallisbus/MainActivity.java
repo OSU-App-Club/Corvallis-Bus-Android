@@ -33,7 +33,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import osu.appclub.corvallisbus.alerts.AlertsFragment;
-import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.browsestops.StopsFragment;
 import osu.appclub.corvallisbus.favorites.FavoritesFragment;
 import osu.appclub.corvallisbus.models.BusStaticData;
@@ -102,8 +102,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    // region LocationProvider
     @Override
     public boolean isLocationAvailable() {
+        // TODO: change this method to request permissions when called?
+        // given that the typical pattern is to ask if available, if not,
+        // subscribe to it becoming available assuming it will at some point
         return apiClient != null && apiClient.isConnected() &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
@@ -148,7 +152,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             listener.onLocationAvailable(this);
         }
     }
+    // endregion
 
+    // region GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
     @Override
     public void onConnected(Bundle bundle) {
         fireOnLocationAvailable();
@@ -163,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Log.d("osu.appclub", "API client connection failed: " + connectionResult);
     }
+    // endregion
 
     @Override
     public void onBackPressed() {
@@ -198,6 +205,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return super.onOptionsItemSelected(item);
     }
 
+    // region NavigationView.OnNavigationItemSelectedListener
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         //Switch the current view based on the selected item
@@ -208,6 +216,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+    // endregion
 
     private FavoritesFragment favoritesFragment;
     FavoritesFragment getFavoritesFragment() {
@@ -293,9 +302,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         displayView(R.id.nav_stops);
     }
 
-    /**
-     * BusStopSelectionQueue
-     */
+    // region BusStopSelectionQueue
     BusStopSelectionQueue.Listener stopDetailsListener;
     @Override
     public void setStopDetailsQueueListener(@Nullable Listener listener) {
@@ -321,4 +328,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public Integer peekBusStopId() {
         return busStopQueue.peek();
     }
+    // endregion
 }

@@ -23,10 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 import osu.appclub.corvallisbus.BusStopSelectionQueue;
-import osu.appclub.corvallisbus.CorvallisBusPreferences;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
-import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.BusStop;
 
@@ -168,7 +168,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         newMarker.setIcon(isFavorite ? gold_selected_icon : green_selected_icon);
 
         if (stopSelectedListener != null) {
-            stopSelectedListener.onStopSelected(busStop.id);
+            stopSelectedListener.onStopSelected(busStop);
         }
     }
 
@@ -230,6 +230,6 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     }
 
     public interface OnStopSelectedListener {
-        void onStopSelected(int stopId);
+        void onStopSelected(BusStop stop);
     }
 }

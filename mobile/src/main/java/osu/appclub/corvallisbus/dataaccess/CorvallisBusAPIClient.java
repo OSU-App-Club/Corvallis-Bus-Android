@@ -1,4 +1,4 @@
-package osu.appclub.corvallisbus.apiclient;
+package osu.appclub.corvallisbus.dataaccess;
 
 import android.location.Location;
 import android.support.annotation.WorkerThread;
@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -26,7 +27,7 @@ import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.RouteArrivalsSummary;
-import osu.appclub.corvallisbus.models.StopDetailsViewModel;
+import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
 
 /*
 
@@ -112,7 +113,7 @@ public final class CorvallisBusAPIClient {
 
     private static final Type arrivalsSummaryMapType = new TypeToken<Map<Integer, List<RouteArrivalsSummary>>>(){}.getType();
     @Nullable
-    public static List<RouteArrivalsSummary> getRouteArrivalsSummary(int stopId) {
+    static List<RouteArrivalsSummary> getRouteArrivalsSummary(int stopId) {
         try {
             URL url = new URL(BASE_URL + "/arrivals-summary/" + stopId);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -128,14 +129,20 @@ public final class CorvallisBusAPIClient {
     }
 
     @Nullable
-    public static StopDetailsViewModel getStopDetailsViewModel(int stopId, List<Integer> favoriteStopIds) {
+    public static List<RouteDetailsViewModel> getRouteDetailsViewModels(int stopId) {
         BusStaticData staticData = getStaticData();
         List<RouteArrivalsSummary> arrivalsSummaries = getRouteArrivalsSummary(stopId);
 
-        if (staticData != null && arrivalsSummaries != null) {
-            return new StopDetailsViewModel(stopId, staticData, arrivalsSummaries, favoriteStopIds);
+        if (staticData == null || arrivalsSummaries == null) {
+            return null;
         }
 
-        return null;
+        List<RouteDetailsViewModel> viewModels = new ArrayList<>();
+        for (RouteArrivalsSummary arrivalsSummary : arrivalsSummaries) {
+            BusRoute route = staticData.routes.get(arrivalsSummary.routeName);
+            viewModels.add(new RouteDetailsViewModel(arrivalsSummary, route));
+        }
+
+        return viewModels;
     }
 }

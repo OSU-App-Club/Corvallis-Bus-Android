@@ -15,10 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import osu.appclub.corvallisbus.BusStopSelectionQueue;
-import osu.appclub.corvallisbus.CorvallisBusPreferences;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
-import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 
 

@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ListFragment;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,24 +21,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 import osu.appclub.corvallisbus.BusStopSelectionQueue;
-import osu.appclub.corvallisbus.CorvallisBusPreferences;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
-import osu.appclub.corvallisbus.apiclient.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
-import osu.appclub.corvallisbus.models.StopDetailsViewModel;
 
 public class StopsFragment extends ListFragment implements BusMapPresenter.OnStopSelectedListener, FloatingActionButton.OnClickListener {
     MapView mapView;
     BusMapPresenter mapPresenter;
     TextView textStopName;
     FloatingActionButton floatingActionButton;
+
     Context context;
 
-    StopDetailsViewModel viewModel = new StopDetailsViewModel();
+    Handler handler = new Handler();
+
+    @Nullable
+    Integer selectedStopId;
 
     StopDetailsListAdapter listAdapter;
-    final ArrayList<RouteDetailsViewModel> listItems = new ArrayList<>();
+    final ArrayList<RouteDetailsViewModel> routeDetailsList = new ArrayList<>();
 
     //Required empty public constructor
     public StopsFragment() {
@@ -89,8 +95,10 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(mapPresenter);
 
-        listAdapter = new StopDetailsListAdapter(getActivity(), listItems);
+        listAdapter = new StopDetailsListAdapter(getActivity(), routeDetailsList);
         setListAdapter(listAdapter);
+
+        reloadArrivalTimesAtInterval();
     }
 
     @Override
@@ -103,8 +111,12 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         mapPresenter.dispose();
         mapPresenter = null;
 
+        selectedStopId = null;
+
+        handler.removeCallbacks(reloadArrivalTimesRunnable);
+
         // Prevent list items from showing up without any other views having content
-        listItems.clear();
+        routeDetailsList.clear();
     }
 
     /**
@@ -112,21 +124,24 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
      */
     @Override
     public void onClick(View v) {
-        viewModel.isFavorite = !viewModel.isFavorite;
+        // This action doesn't have meaning if there is no selected stop
+        if (selectedStopId == null) {
+            return;
+        }
 
         List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
 
-        if (viewModel.isFavorite) {
-            favoriteStopIds.add(viewModel.stopId);
+        // Assume the stop was just favorited if the favorites list doesn't contain that stop
+        boolean stopWasFavorited = !favoriteStopIds.contains(selectedStopId);
+        if (stopWasFavorited) {
+            favoriteStopIds.add(selectedStopId);
+        } else {
+            favoriteStopIds.remove(selectedStopId);
         }
-        else {
-            favoriteStopIds.remove((Integer)viewModel.stopId);
-        }
-
         CorvallisBusPreferences.setFavoriteStopIds(context, favoriteStopIds);
 
-        updateFavoriteButtonState(viewModel.isFavorite);
-        mapPresenter.setFavoritedStateForStop(viewModel.isFavorite, viewModel.stopId);
+        updateFavoriteButtonState(stopWasFavorited);
+        mapPresenter.setFavoritedStateForStop(stopWasFavorited, selectedStopId);
     }
 
     public void updateFavoriteButtonState(boolean isFavorite) {
@@ -138,34 +153,52 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
         floatingActionButton.setBackgroundTintList(colorStateList);
     }
-    public void onStopSelected(int stopId) {
-        startLoadingArrivals(stopId);
+
+    @Override
+    /**
+     * BusMapPresenter.OnStopSelectedListener
+     */
+    public void onStopSelected(BusStop stop) {
+        List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
+
+        textStopName.setText(stop.name);
+        updateFavoriteButtonState(favoriteStopIds.contains(stop.id));
+        selectedStopId = stop.id;
+
+        startLoadingArrivals();
     }
 
-    public void startLoadingArrivals(final int stopId) {
-        final List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
+    private final Runnable reloadArrivalTimesRunnable = new Runnable() {
+        @Override
+        public void run() {
+            startLoadingArrivals();
+            reloadArrivalTimesAtInterval();
+        }
+    };
+    /**
+     * Calls the startLoadingArrivals at a regular interval.
+     */
+    private void reloadArrivalTimesAtInterval() {
+        handler.postDelayed(reloadArrivalTimesRunnable, 30000);
+    }
 
-        new AsyncTask<Void, Void, StopDetailsViewModel>() {
+    public void startLoadingArrivals() {
+        if (selectedStopId == null) {
+            return;
+        }
+
+        new AsyncTask<Void, Void, List<RouteDetailsViewModel>>() {
 
             @Override
-            protected StopDetailsViewModel doInBackground(Void... params) {
-                // TODO: this method needs to move into CorvallisBusManager or something
-                return CorvallisBusAPIClient.getStopDetailsViewModel(stopId, favoriteStopIds);
+            protected List<RouteDetailsViewModel> doInBackground(Void... params) {
+                return CorvallisBusAPIClient.getRouteDetailsViewModels(selectedStopId);
             }
 
             @Override
-            protected void onPostExecute(StopDetailsViewModel stopDetailsViewModel) {
-                StopsFragment.this.viewModel = stopDetailsViewModel;
-
-                updateFavoriteButtonState(stopDetailsViewModel != null && stopDetailsViewModel.isFavorite);
-
-                textStopName.setText(stopDetailsViewModel == null
-                        ? ""
-                        : stopDetailsViewModel.stopName);
-
-                listItems.clear();
-                if (stopDetailsViewModel != null) {
-                    listItems.addAll(stopDetailsViewModel.routeDetailsList);
+            protected void onPostExecute(final List<RouteDetailsViewModel> viewModels) {
+                routeDetailsList.clear();
+                if (viewModels != null) {
+                    routeDetailsList.addAll(viewModels);
                 }
                 listAdapter.notifyDataSetChanged();
             }
