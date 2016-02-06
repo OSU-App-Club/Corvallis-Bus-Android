@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.MapView;
@@ -79,9 +81,6 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         floatingActionButton = (FloatingActionButton) getActivity().findViewById(R.id.fab);
         floatingActionButton.setOnClickListener(this);
 
-        // A stop must be selected before enabling the favorite button
-        floatingActionButton.setEnabled(false);
-
         textStopName = (TextView) getActivity().findViewById(R.id.stopName);
 
         if (getActivity() instanceof LocationProvider && getActivity() instanceof BusStopSelectionQueue) {
@@ -141,7 +140,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     }
 
     public void updateFavoriteButtonState(boolean isFavorite) {
-        floatingActionButton.setEnabled(true);
+        floatingActionButton.show();
 
         ColorStateList colorStateList = ColorStateList.valueOf(isFavorite
                 ? ContextCompat.getColor(context, R.color.colorFavorite)
