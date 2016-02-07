@@ -61,6 +61,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
+        googleMap.setInfoWindowAdapter(this);
 
         green_icon = BitmapDescriptorFactory.fromResource(R.drawable.greenoval);
         green_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.greenoval_highlighted_big);
@@ -166,6 +167,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         boolean isFavorite = favoriteStopIds.contains(busStop.id);
 
         newMarker.setIcon(isFavorite ? gold_selected_icon : green_selected_icon);
+        newMarker.showInfoWindow();
 
         if (stopSelectedListener != null) {
             stopSelectedListener.onStopSelected(busStop);
@@ -228,8 +230,21 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     public void dispose() {
         stopSelectionQueue.setStopDetailsQueueListener(null);
     }
+    
 
     public interface OnStopSelectedListener {
         void onStopSelected(BusStop stop);
     }
+
+    @Override
+    public View getInfoWindow(Marker marker) {
+        LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        return inflater.inflate(R.layout.empty_info_window, null);
+    }
+
+    @Override
+    public View getInfoContents(Marker marker) {
+        return null;
+    }
+
 }
