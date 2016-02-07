@@ -13,7 +13,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -30,7 +29,8 @@ import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
 
-public class StopsFragment extends ListFragment implements BusMapPresenter.OnStopSelectedListener, FloatingActionButton.OnClickListener {
+public class StopsFragment extends ListFragment implements BusMapPresenter.OnStopSelectedListener,
+        FloatingActionButton.OnClickListener {
     MapView mapView;
     BusMapPresenter mapPresenter;
     TextView textStopName;
@@ -40,8 +40,8 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
     final Handler handler = new Handler();
 
-    @Nullable
-    Integer selectedStopId;
+    @Nullable Integer selectedStopId;
+    @Nullable String selectedRouteName;
 
     StopDetailsListAdapter listAdapter;
     final ArrayList<RouteDetailsViewModel> routeDetailsList = new ArrayList<>();
@@ -160,6 +160,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         updateFavoriteButtonState(favoriteStopIds.contains(stop.id));
         selectedStopId = stop.id;
 
+        mapPresenter.clearDisplayedRoute();
         startLoadingArrivals();
     }
 
@@ -191,13 +192,26 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
             @Override
             protected void onPostExecute(final List<RouteDetailsViewModel> viewModels) {
-                routeDetailsList.clear();
-                if (viewModels != null) {
-                    routeDetailsList.addAll(viewModels);
-                }
-                listAdapter.notifyDataSetChanged();
+                onLoadArrivals(viewModels);
             }
         }.execute();
+    }
+
+    void onLoadArrivals(@Nullable final List<RouteDetailsViewModel> viewModels) {
+        routeDetailsList.clear();
+
+        if (viewModels == null || viewModels.size() == 0) {
+            listAdapter.notifyDataSetChanged();
+            return;
+        }
+        routeDetailsList.addAll(viewModels);
+        listAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        RouteDetailsViewModel selectedRoute = routeDetailsList.get(position);
+        mapPresenter.displayRoute(selectedRoute);
     }
 
     @Override

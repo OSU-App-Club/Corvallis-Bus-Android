@@ -3,9 +3,12 @@ package osu.appclub.corvallisbus.browsestops;
 import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -17,6 +20,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,12 +33,13 @@ import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.BusStop;
+import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
 
 /**
  * Created by rikkigibson on 1/20/16.
  */
 public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.LocationAvailableListener,
-        GoogleMap.OnMarkerClickListener, BusStopSelectionQueue.Listener {
+        GoogleMap.OnMarkerClickListener, GoogleMap.InfoWindowAdapter, BusStopSelectionQueue.Listener {
     private final Context context;
     private final LocationProvider locationProvider;
     private final Map<Marker, BusStop> markersLookup = new HashMap<>();
@@ -134,10 +139,9 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         for (int i = 0; i < busStops.size(); i++) {
             BusStop busStop = busStops.valueAt(i);
 
+            boolean isFavorite = favoriteStopIds.contains(busStop.id);
             options.position(busStop.location);
-            options.icon(favoriteStopIds.contains(busStop.id)
-                ? gold_icon
-                : green_icon);
+            options.icon(isFavorite ? gold_icon : green_icon);
             Marker marker = googleMap.addMarker(options);
             markersLookup.put(marker, busStop);
         }
@@ -155,6 +159,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     }
 
     void selectMarker(Marker newMarker) {
+
         List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
 
         if (currentMarker != null) {
@@ -197,6 +202,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
             }
 
             marker.setIcon(newIcon);
+            marker.showInfoWindow();
         }
     }
 
@@ -230,10 +236,20 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     public void dispose() {
         stopSelectionQueue.setStopDetailsQueueListener(null);
     }
-    
 
-    public interface OnStopSelectedListener {
-        void onStopSelected(BusStop stop);
+    @Nullable Polyline selectedRoutePolyline;
+    public void displayRoute(@NonNull RouteDetailsViewModel route) {
+        if (selectedRoutePolyline != null) {
+            selectedRoutePolyline.remove();
+        }
+        selectedRoutePolyline = googleMap.addPolyline(route.polyline);
+    }
+
+    public void clearDisplayedRoute() {
+        if (selectedRoutePolyline != null) {
+            selectedRoutePolyline.remove();
+        }
+        selectedRoutePolyline = null;
     }
 
     @Override
@@ -245,6 +261,10 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     @Override
     public View getInfoContents(Marker marker) {
         return null;
+    }
+
+    public interface OnStopSelectedListener {
+        void onStopSelected(BusStop stop);
     }
 
 }
