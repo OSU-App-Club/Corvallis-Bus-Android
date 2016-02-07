@@ -178,10 +178,23 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         startLoadingArrivals();
     }
 
+    boolean arrivalsDidFinishLoading;
+    final Runnable clearListRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!arrivalsDidFinishLoading) {
+                routeDetailsList.clear();
+                listAdapter.notifyDataSetChanged();
+            }
+        }
+    };
     public void startLoadingArrivals() {
         if (selectedStopId == null) {
             return;
         }
+
+        arrivalsDidFinishLoading = false;
+        handler.postDelayed(clearListRunnable, 1000);
 
         new AsyncTask<Void, Void, List<RouteDetailsViewModel>>() {
             @Override
@@ -198,6 +211,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     }
 
     void onLoadArrivals(@Nullable final List<RouteDetailsViewModel> viewModels) {
+        arrivalsDidFinishLoading = true;
         routeDetailsList.clear();
 
         if (viewModels == null || viewModels.size() == 0) {
