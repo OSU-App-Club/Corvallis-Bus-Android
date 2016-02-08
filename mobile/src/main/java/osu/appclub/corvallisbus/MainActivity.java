@@ -118,6 +118,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // region LocationProvider
     @Override
     public boolean isLocationResolved() {
+        // TODO: check if location services enabled and if not prompt to open settings
         int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
         boolean hasPermission = permission == PackageManager.PERMISSION_GRANTED;
         if (!hasPermission) {

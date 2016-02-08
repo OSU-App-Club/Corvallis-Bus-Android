@@ -64,6 +64,10 @@ public final class CorvallisBusAPIClient {
     private static final Type favoriteStopsListType = new TypeToken<List<FavoriteStopViewModel>>(){}.getType();
     @Nullable
     public static List<FavoriteStopViewModel> getFavoriteStops(@NotNull List<Integer> stopIds, Location location) {
+        if (stopIds.size() == 0 && location == null) {
+            return new ArrayList<>();
+        }
+
         String stopIdsString = TextUtils.join(",", stopIds);
         String locationString = location == null
                 ? ""
