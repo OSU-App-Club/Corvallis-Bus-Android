@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import osu.appclub.corvallisbus.BusStopSelectionQueue;
+import osu.appclub.corvallisbus.Refresher;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
@@ -39,6 +40,24 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     Context context;
 
     final Handler handler = new Handler();
+    final Refresher arrivalsRefresher = new Refresher(30000) {
+        @Override
+        public void repeatedAction() {
+            startLoadingArrivals();
+        }
+    };
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+
+        if (isVisibleToUser) {
+            arrivalsRefresher.restart();
+        }
+        else {
+            arrivalsRefresher.stop();
+        }
+    }
 
     @Nullable Integer selectedStopId;
     @Nullable String selectedRouteName;
@@ -164,20 +183,6 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         startLoadingArrivals();
     }
 
-    private final Runnable reloadArrivalTimesRunnable = new Runnable() {
-        @Override
-        public void run() {
-            reloadArrivalTimesAtInterval();
-        }
-    };
-    /**
-     * Calls the startLoadingArrivals at a regular interval.
-     */
-    private void reloadArrivalTimesAtInterval() {
-        handler.postDelayed(reloadArrivalTimesRunnable, 30000);
-        startLoadingArrivals();
-    }
-
     boolean arrivalsDidFinishLoading;
     final Runnable clearListRunnable = new Runnable() {
         @Override
@@ -188,6 +193,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
             }
         }
     };
+
     public void startLoadingArrivals() {
         if (selectedStopId == null) {
             return;
@@ -235,7 +241,9 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
             mapView.onResume();
         }
 
-        reloadArrivalTimesAtInterval();
+        if (getUserVisibleHint()) {
+            arrivalsRefresher.restart();
+        }
     }
 
     @Override
@@ -245,7 +253,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
             mapView.onPause();
         }
 
-        handler.removeCallbacks(reloadArrivalTimesRunnable);
+        arrivalsRefresher.stop();
     }
 
     @Override

@@ -3,7 +3,6 @@ package osu.appclub.corvallisbus.favorites;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -17,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import osu.appclub.corvallisbus.BusStopSelectionQueue;
+import osu.appclub.corvallisbus.Refresher;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
@@ -31,11 +31,32 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     FavoritesListAdapter adapter;
     SwipeRefreshLayout swipeRefreshLayout;
 
-    final Handler handler = new Handler();
+    final Refresher favoritesRefresher = new Refresher(30000) {
+        @Override
+        protected void repeatedAction() {
+            startLoadingFavorites();
+        }
+    };
 
     //Required empty public constructor
     public FavoritesFragment() {
 
+    }
+
+    /**
+     * Called when the user visibility of the fragment changes.
+     * @param isVisibleToUser A value indicating whether this fragment is visible to the user.
+     */
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+
+        if (isVisibleToUser) {
+            favoritesRefresher.restart();
+        }
+        else {
+            favoritesRefresher.stop();
+        }
     }
 
     //Create a new instance of this fragment using the provided parameters.
@@ -58,13 +79,15 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     @Override
     public void onResume() {
         super.onResume();
-        reloadFavoritesAtInterval();
+        if (getUserVisibleHint()) {
+            favoritesRefresher.restart();
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        handler.removeCallbacks(reloadFavoritesRunnable);
+        favoritesRefresher.stop();
     }
 
     @Override
@@ -95,18 +118,6 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
         });
     }
 
-    final Runnable reloadFavoritesRunnable = new Runnable() {
-        @Override
-        public void run() {
-            reloadFavoritesAtInterval();
-        }
-    };
-
-    void reloadFavoritesAtInterval() {
-        handler.postDelayed(reloadFavoritesRunnable, 30000);
-        startLoadingFavorites();
-    }
-
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         FavoriteStopViewModel selectedStop = listItems.get(position);
@@ -118,6 +129,10 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
      * sending it off to the network to get the user's favorite stops.
      */
     public void startLoadingFavorites() {
+        if (locationProvider == null) {
+            return;
+        }
+
         if (locationProvider.isLocationResolved()) {
             Location location = locationProvider.getUserLocation();
             startFavoritesDownloadTask(location);
