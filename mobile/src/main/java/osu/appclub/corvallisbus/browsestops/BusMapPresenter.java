@@ -84,10 +84,10 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
         googleMap.setOnMarkerClickListener(this);
 
-        if (locationProvider.isLocationAvailable()) {
+        if (locationProvider.isLocationResolved()) {
             updateUserLocation();
         } else {
-            locationProvider.addLocationAvailableListener(this);
+            locationProvider.addLocationResolutionListener(this);
         }
 
         initMarkers();
@@ -97,8 +97,8 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
      * LocationProvider.LocationAvailableListener
      */
     @Override
-    public void onLocationAvailable(LocationProvider provider) {
-        provider.removeLocationAvailableListener(this);
+    public void onLocationResolved(LocationProvider provider) {
+        provider.removeLocationResolutionListener(this);
         updateUserLocation();
     }
 

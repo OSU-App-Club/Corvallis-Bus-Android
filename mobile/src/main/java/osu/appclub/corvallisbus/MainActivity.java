@@ -7,15 +7,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.NavigationView;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -32,20 +27,17 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import osu.appclub.corvallisbus.alerts.AlertsFragment;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
-import osu.appclub.corvallisbus.browsestops.StopsFragment;
-import osu.appclub.corvallisbus.favorites.FavoritesFragment;
 import osu.appclub.corvallisbus.models.BusStaticData;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopSelectionQueue {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopSelectionQueue, ViewPager.OnPageChangeListener {
     private GoogleApiClient apiClient;
     private Toolbar toolbar;
+    private ViewPager pager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         // Kick off static data download task so it can be accessed quickly later
         new AsyncTask<Void, Void, BusStaticData>() {
             @Override
@@ -61,23 +53,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         toolbar.setTitle("Favorites");
         setSupportActionBar(toolbar);
 
-        // Load the Favorites Fragment
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
+        pager = (ViewPager)findViewById(R.id.viewPager);
+        pager.setAdapter(new CorvallisBusPagerAdapter(getSupportFragmentManager()));
+        pager.addOnPageChangeListener(this);
 
-        FavoritesFragment favoritesFragment = new FavoritesFragment();
-        ft.replace(R.id.content_frame, favoritesFragment);
-        ft.commit();
-
-        // Navigation Drawer
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-
-        // Navigation View
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        TabLayout tabLayout = (TabLayout)findViewById(R.id.tabLayout);
+        tabLayout.setupWithViewPager(pager);
+        tabLayout.getTabAt(0).setIcon(R.drawable.favorites_24dp);
+        tabLayout.getTabAt(1).setIcon(R.drawable.ic_directions_bus_white_24dp);
+        tabLayout.getTabAt(2).setIcon(R.drawable.ic_warning_white_24dp);
 
         apiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -85,6 +69,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .addApi(LocationServices.API)
                 .build();
     }
+
+    // region ViewPager.OnPageChangeListener
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        switch(position) {
+            case 0:
+                toolbar.setTitle("Favorites");
+                break;
+            case 1:
+                toolbar.setTitle("Browse Stops");
+                break;
+            case 2:
+                toolbar.setTitle("Service Alerts");
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported position selected");
+        }
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
+    }
+    // endregion
 
     @Override
     protected void onStart() {
@@ -104,32 +117,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     // region LocationProvider
     @Override
-    public boolean isLocationAvailable() {
-        // TODO: change this method to request permissions when called?
-        // given that the typical pattern is to ask if available, if not,
-        // subscribe to it becoming available assuming it will at some point
-        return apiClient != null && apiClient.isConnected() &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    public boolean isLocationResolved() {
+        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        boolean hasPermission = permission == PackageManager.PERMISSION_GRANTED;
+        if (!hasPermission) {
+            ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, 0);
+        }
+        return apiClient != null && apiClient.isConnected() && hasPermission;
     }
 
     @Nullable
     @Override
     public Location getUserLocation() {
-        // TODO: using an android 6 device, figure out when this is getting called-- callers should check if location is available first.
-        ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, 0);
-        try {
+        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        if (permission == PackageManager.PERMISSION_GRANTED) {
             return LocationServices.FusedLocationApi.getLastLocation(apiClient);
-        }
-        catch (SecurityException e) {
-            Log.d("osu.appclub", e.getMessage());
+        } else {
             return null;
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        // TODO: maybe should always consider location resolved when this calls back?
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            fireOnLocationAvailable();
+            fireOnLocationResolved();
         }
         else {
             Toast.makeText(this, "You're gonna have a bad time", Toast.LENGTH_SHORT).show();
@@ -138,18 +150,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private final List<LocationAvailableListener> locationListeners = new ArrayList<>();
     @Override
-    public void addLocationAvailableListener(LocationAvailableListener listener) {
+    public void addLocationResolutionListener(LocationAvailableListener listener) {
         locationListeners.add(listener);
     }
 
     @Override
-    public void removeLocationAvailableListener(LocationAvailableListener listener) {
+    public void removeLocationResolutionListener(LocationAvailableListener listener) {
         locationListeners.remove(listener);
     }
 
-    void fireOnLocationAvailable() {
-        for (LocationAvailableListener listener : locationListeners) {
-            listener.onLocationAvailable(this);
+    void fireOnLocationResolved() {
+        // Prevents ConcurrentModificationException because listeners can remove themselves
+        ArrayList<LocationAvailableListener> iterableListeners = new ArrayList<>(locationListeners);
+        for (LocationAvailableListener listener : iterableListeners) {
+            listener.onLocationResolved(this);
         }
     }
     // endregion
@@ -157,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // region GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
     @Override
     public void onConnected(Bundle bundle) {
-        fireOnLocationAvailable();
+        fireOnLocationResolved();
     }
 
     @Override
@@ -170,17 +184,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Log.d("osu.appclub", "API client connection failed: " + connectionResult);
     }
     // endregion
-
-    @Override
-    public void onBackPressed() {
-        //Handle the navigation drawer when user presses the back button
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -205,101 +208,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return super.onOptionsItemSelected(item);
     }
 
-    // region NavigationView.OnNavigationItemSelectedListener
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        //Switch the current view based on the selected item
-        displayView(item.getItemId());
-
-        //Close drawer
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }
-    // endregion
-
-    private FavoritesFragment favoritesFragment;
-    FavoritesFragment getFavoritesFragment() {
-        if (favoritesFragment == null) {
-            favoritesFragment = new FavoritesFragment();
-        }
-        return favoritesFragment;
-    }
-
-    private StopsFragment stopsFragment;
-    StopsFragment getStopsFragment() {
-        if (stopsFragment == null) {
-            stopsFragment = new StopsFragment();
-        }
-        return stopsFragment;
-    }
-
-    private AlertsFragment alertsFragment;
-    AlertsFragment getAlertsFragment() {
-        if (alertsFragment == null) {
-            alertsFragment = new AlertsFragment();
-        }
-        return alertsFragment;
-    }
-
-    private SettingsFragment settingsFragment;
-    SettingsFragment getSettingsFragment() {
-        if (settingsFragment == null) {
-            settingsFragment = new SettingsFragment();
-        }
-        return settingsFragment;
-    }
-
-    // Switches the displayed fragment to the fragment given by the id parameter.
-    private void displayView(int id) {
-        Fragment newFragment;
-        switch (id) {
-            case R.id.nav_favs:
-                toolbar.setTitle("Favorites");
-                newFragment = getFavoritesFragment();
-                break;
-            case R.id.nav_stops:
-                toolbar.setTitle("Stops");
-                newFragment = getStopsFragment();
-                break;
-            case R.id.nav_alerts:
-                toolbar.setTitle("Alerts");
-                newFragment = getAlertsFragment();
-                break;
-            case R.id.nav_settings:
-                toolbar.setTitle("Settings");
-                newFragment = getSettingsFragment();
-                break;
-            default:
-                throw new UnsupportedOperationException();
-        }
-
-        FragmentManager fm = getSupportFragmentManager();
-        Fragment currentFragment = fm.findFragmentById(R.id.content_frame);
-
-        if (currentFragment == newFragment) {
-            return;
-        }
-
-        Bundle args = new Bundle();
-        //args.put...
-        newFragment.setArguments(args);
-
-        FragmentTransaction ft = fm.beginTransaction();
-
-        //Replace current fragment
-        ft.replace(R.id.content_frame, newFragment);
-        ft.commit();
-    }
-
     public void displayStopsFragment() {
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-
-        // For now just assume the item at index 1 is the stops view
-        // TODO: make this more robust/nicer
-        MenuItem item = navigationView.getMenu().getItem(1);
-        item.setChecked(true);
-        displayView(R.id.nav_stops);
+        pager.setCurrentItem(1);
     }
 
     // region BusStopSelectionQueue

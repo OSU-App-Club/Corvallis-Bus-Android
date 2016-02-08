@@ -118,17 +118,17 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
      * sending it off to the network to get the user's favorite stops.
      */
     public void startLoadingFavorites() {
-        if (locationProvider.isLocationAvailable()) {
+        if (locationProvider.isLocationResolved()) {
             Location location = locationProvider.getUserLocation();
             startFavoritesDownloadTask(location);
         } else {
-            locationProvider.addLocationAvailableListener(this);
+            locationProvider.addLocationResolutionListener(this);
         }
     }
 
     @Override
-    public void onLocationAvailable(LocationProvider provider) {
-        provider.removeLocationAvailableListener(this);
+    public void onLocationResolved(LocationProvider provider) {
+        provider.removeLocationResolutionListener(this);
         Location location = provider.getUserLocation();
         startFavoritesDownloadTask(location);
     }
@@ -136,7 +136,7 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     public void startFavoritesDownloadTask(final Location location) {
         final List<Integer> stopIds = CorvallisBusPreferences.getFavoriteStopIds(getActivity());
 
-        AsyncTask<Void, Void, List<FavoriteStopViewModel>> task = new AsyncTask<Void, Void, List<FavoriteStopViewModel>>() {
+        new AsyncTask<Void, Void, List<FavoriteStopViewModel>>() {
             @Override
             protected List<FavoriteStopViewModel> doInBackground(Void... params) {
                 Log.d("osu.appclub", "Loading favorite stops from background thread");
@@ -161,7 +161,6 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
                     swipeRefreshLayout.setRefreshing(false);
                 }
             }
-        };
-        task.execute();
+        }.execute();
     }
 }
