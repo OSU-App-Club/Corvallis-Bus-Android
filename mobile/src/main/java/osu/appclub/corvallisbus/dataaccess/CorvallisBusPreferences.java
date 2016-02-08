@@ -29,14 +29,12 @@ public class CorvallisBusPreferences {
 
     private static final Type INTEGER_LIST_TYPE = new TypeToken<List<Integer>>(){}.getType();
     public static List<Integer> getFavoriteStopIds(@NonNull Context context) {
-        if (cachedFavoriteStopIds != null) {
-            return cachedFavoriteStopIds;
+        if (cachedFavoriteStopIds == null) {
+            SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
+            String favoriteStopsJson = sharedPreferences.getString(FAVORITE_STOPS_KEY, "[]");
+            cachedFavoriteStopIds = gson.fromJson(favoriteStopsJson, INTEGER_LIST_TYPE);
         }
-
-        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
-        String favoriteStopsJson = sharedPreferences.getString(FAVORITE_STOPS_KEY, "[]");
-        List<Integer> favoriteStops = gson.fromJson(favoriteStopsJson, INTEGER_LIST_TYPE);
-        return favoriteStops;
+        return cachedFavoriteStopIds;
     }
 
     public static void setFavoriteStopIds(@NonNull Context context, @NonNull List<Integer> favoriteStopIds) {
