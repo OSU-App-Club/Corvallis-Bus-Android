@@ -140,12 +140,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        // TODO: maybe should always consider location resolved when this calls back?
-        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (grantResults.length != 0) {
+            // Continue regardless of whether location permissions are granted or not
             fireOnLocationResolved();
-        }
-        else {
-            Toast.makeText(this, "You're gonna have a bad time", Toast.LENGTH_SHORT).show();
         }
     }
 
