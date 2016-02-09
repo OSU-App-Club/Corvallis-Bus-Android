@@ -45,6 +45,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     private final Map<Marker, BusStop> markersLookup = new HashMap<>();
     private final BusStopSelectionQueue stopSelectionQueue;
     private GoogleMap googleMap;
+    private final LatLng CORVALLIS_LATLNG = new LatLng(44.56802, -123.27926);
 
     BitmapDescriptor green_icon;
     BitmapDescriptor green_selected_icon;
@@ -73,7 +74,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         gold_icon = BitmapDescriptorFactory.fromResource(R.drawable.goldoval);
         gold_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.goldoval_highlighted_big);
 
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.56802, -123.27926), 14.0f));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CORVALLIS_LATLNG, 14.0f));
 
         try {
             googleMap.setMyLocationEnabled(true);
@@ -85,7 +86,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         googleMap.setOnMarkerClickListener(this);
 
         if (locationProvider.isLocationResolved()) {
-            updateUserLocation();
+            initializeUserLocation();
         } else {
             locationProvider.addLocationResolutionListener(this);
         }
@@ -99,15 +100,21 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     @Override
     public void onLocationResolved(LocationProvider provider) {
         provider.removeLocationResolutionListener(this);
-        updateUserLocation();
+        initializeUserLocation();
     }
 
-    void updateUserLocation() {
+    void initializeUserLocation() {
         Location location = locationProvider.getUserLocation();
         if (location != null) {
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            CameraUpdate update = CameraUpdateFactory.newLatLng(latLng);
-            googleMap.moveCamera(update);
+            float[] distanceResult = new float[1];
+            Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                    CORVALLIS_LATLNG.latitude, CORVALLIS_LATLNG.longitude, distanceResult);
+            // Only go to the user's location if they're within 20 miles of Corvallis
+            if (distanceResult[0] < 32000) {
+                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                CameraUpdate update = CameraUpdateFactory.newLatLng(latLng);
+                googleMap.moveCamera(update);
+            }
         }
     }
 
