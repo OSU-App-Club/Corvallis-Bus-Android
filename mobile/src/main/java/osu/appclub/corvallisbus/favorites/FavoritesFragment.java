@@ -109,7 +109,7 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
         adapter = new FavoritesListAdapter(getActivity(), listItems);
         getListView().setAdapter(adapter);
 
-        swipeRefreshLayout = (SwipeRefreshLayout) getActivity().findViewById(R.id.swipe_container);
+        swipeRefreshLayout = (SwipeRefreshLayout) getActivity().findViewById(R.id.favorites_swipe_container);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
