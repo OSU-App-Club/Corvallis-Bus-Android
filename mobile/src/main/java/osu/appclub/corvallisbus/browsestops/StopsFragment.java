@@ -60,7 +60,6 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
     }
 
     @Nullable Integer selectedStopId;
-    @Nullable String selectedRouteName;
 
     StopDetailsListAdapter listAdapter;
     final ArrayList<RouteDetailsViewModel> routeDetailsList = new ArrayList<>();

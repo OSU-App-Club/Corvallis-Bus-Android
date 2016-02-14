@@ -3,6 +3,7 @@ package osu.appclub.corvallisbus.browsestops;
 import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -46,6 +47,13 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     private final BusStopSelectionQueue stopSelectionQueue;
     private GoogleMap googleMap;
     private final LatLng CORVALLIS_LATLNG = new LatLng(44.56802, -123.27926);
+    private final Handler handler = new Handler();
+    private final Runnable initMarkersRunnable = new Runnable() {
+        @Override
+        public void run() {
+            initMarkers();
+        }
+    };
 
     BitmapDescriptor green_icon;
     BitmapDescriptor green_selected_icon;
@@ -130,6 +138,8 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
                 if (busStaticData == null) {
                     Toast.makeText(context, "Failed to load bus stops", Toast.LENGTH_SHORT)
                             .show();
+                    // Try again after a brief interval
+                    handler.postDelayed(initMarkersRunnable, 3000);
                     return;
                 }
 
