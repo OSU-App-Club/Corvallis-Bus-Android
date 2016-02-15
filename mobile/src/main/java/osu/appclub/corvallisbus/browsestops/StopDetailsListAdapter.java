@@ -1,11 +1,14 @@
 package osu.appclub.corvallisbus.browsestops;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -28,7 +31,7 @@ public class StopDetailsListAdapter extends ArrayAdapter<RouteDetailsViewModel> 
             convertView = inflater.inflate(R.layout.stop_details_row, parent, false);
         }
 
-        RouteDetailsViewModel routeDetails = getItem(position);
+        final RouteDetailsViewModel routeDetails = getItem(position);
 
         TextView routeName = (TextView) convertView.findViewById(R.id.routeName);
         routeName.setText(routeDetails.routeName);
@@ -36,7 +39,18 @@ public class StopDetailsListAdapter extends ArrayAdapter<RouteDetailsViewModel> 
 
         ((TextView)convertView.findViewById(R.id.arrivalsSummary)).setText(routeDetails.arrivalsSummary);
         ((TextView)convertView.findViewById(R.id.scheduleSummary)).setText(routeDetails.scheduleSummary);
-
+        convertView.findViewById(R.id.info_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, routeDetails.url);
+                try {
+                    getContext().startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Couldn't open the web page for the selected route.", Toast.LENGTH_SHORT)
+                         .show();
+                }
+            }
+        });
 
         return convertView;
     }
