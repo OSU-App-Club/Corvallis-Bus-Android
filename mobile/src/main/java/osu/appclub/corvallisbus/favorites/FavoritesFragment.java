@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -116,6 +117,19 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
                 startLoadingFavorites();
             }
         });
+
+        // This crazy setup is the "best" way to make the layout start refreshing as soon as it is able.
+        swipeRefreshLayout.getViewTreeObserver()
+                .addOnGlobalLayoutListener(
+                        new ViewTreeObserver.OnGlobalLayoutListener() {
+                            @Override
+                            public void onGlobalLayout() {
+                                swipeRefreshLayout
+                                        .getViewTreeObserver()
+                                        .removeOnGlobalLayoutListener(this);
+                                swipeRefreshLayout.setRefreshing(true);
+                            }
+                        });
     }
 
     @Override
