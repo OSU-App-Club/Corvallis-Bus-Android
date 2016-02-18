@@ -16,7 +16,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -59,9 +58,18 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         TabLayout tabLayout = (TabLayout)findViewById(R.id.tabLayout);
         tabLayout.setupWithViewPager(pager);
-        tabLayout.getTabAt(0).setIcon(R.drawable.favorites_24dp);
-        tabLayout.getTabAt(1).setIcon(R.drawable.ic_directions_bus_white_24dp);
-        tabLayout.getTabAt(2).setIcon(R.drawable.ic_warning_white_24dp);
+
+        TabLayout.Tab favoritesTab = tabLayout.getTabAt(0);
+        assert favoritesTab != null;
+        favoritesTab.setIcon(R.drawable.favorites_24dp);
+
+        TabLayout.Tab browseTab = tabLayout.getTabAt(1);
+        assert browseTab != null;
+        browseTab.setIcon(R.drawable.ic_directions_bus_white_24dp);
+
+        TabLayout.Tab alertsTab = tabLayout.getTabAt(2);
+        assert alertsTab != null;
+        alertsTab.setIcon(R.drawable.ic_warning_white_24dp);
 
         apiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
