@@ -1,5 +1,6 @@
 package osu.appclub.corvallisbus.browsestops;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.os.AsyncTask;
@@ -21,7 +22,9 @@ import com.google.android.gms.maps.MapView;
 import java.util.ArrayList;
 import java.util.List;
 
+import osu.appclub.corvallisbus.ActivityRunningMonitor;
 import osu.appclub.corvallisbus.BusStopSelectionQueue;
+import osu.appclub.corvallisbus.MainActivity;
 import osu.appclub.corvallisbus.Refresher;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
@@ -101,10 +104,15 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
         textStopName = (TextView) getActivity().findViewById(R.id.stopName);
 
-        if (getActivity() instanceof LocationProvider && getActivity() instanceof BusStopSelectionQueue) {
-            mapPresenter = new BusMapPresenter(getActivity(), (LocationProvider)getActivity(), (BusStopSelectionQueue)getActivity());
+        Activity activity = getActivity();
+        if (activity instanceof LocationProvider && activity instanceof BusStopSelectionQueue &&
+            activity instanceof ActivityRunningMonitor) {
+                mapPresenter = new BusMapPresenter(activity, (LocationProvider)activity,
+                        (BusStopSelectionQueue)activity, (ActivityRunningMonitor)activity);
         } else {
-            throw new UnsupportedOperationException("Stops fragment must be attached to an activity implementing LocationProvider and BusStopSelectionQueue.");
+            throw new UnsupportedOperationException(
+                    "Stops fragment must be attached to an activity implementing " +
+                    "LocationProvider, BusStopSelectionQueue and ActivityRunningMonitor.");
         }
         mapPresenter.stopSelectedListener = this;
 

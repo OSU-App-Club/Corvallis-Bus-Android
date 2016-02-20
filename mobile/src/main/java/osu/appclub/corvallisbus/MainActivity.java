@@ -1,6 +1,7 @@
 package osu.appclub.corvallisbus;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -30,7 +31,8 @@ import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.BusStaticData;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopSelectionQueue, ViewPager.OnPageChangeListener {
+        GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopSelectionQueue,
+        ViewPager.OnPageChangeListener, ActivityRunningMonitor {
     private GoogleApiClient apiClient;
     private Toolbar toolbar;
     private ViewPager pager;
@@ -123,6 +125,43 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
+    private boolean isActivityRunning = false;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isActivityRunning = true;
+        for (ActivityRunningMonitor.Listener listener : new ArrayList<>(activityRunningListeners)) {
+            listener.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isActivityRunning = false;
+        for (ActivityRunningMonitor.Listener listener : new ArrayList<>(activityRunningListeners)) {
+            listener.onPause();
+        }
+    }
+
+    // region ActivityRunningMonitor
+    List<ActivityRunningMonitor.Listener> activityRunningListeners = new ArrayList<>();
+    @Override
+    public boolean isActivityRunning() {
+        return isActivityRunning;
+    }
+
+    @Override
+    public void addActivityRunningListener(ActivityRunningMonitor.Listener listener) {
+        activityRunningListeners.add(listener);
+    }
+
+    @Override
+    public void removeActivityRunningListener(ActivityRunningMonitor.Listener listener) {
+        activityRunningListeners.remove(listener);
+    }
+    // endregion
+
     // region LocationProvider
     @Override
     public boolean isLocationResolved() {
@@ -191,28 +230,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
     // endregion
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        //Inflate the options menu along the action bar
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        //Handle action bar item clicks
-        /*Remember: Specify a parent activity in the manifest so Android
-        *           handles Home/Up button clicks automagically*/
-        int id = item.getItemId();
-
-        //Setting action
-        if (id == R.id.action_settings) {
-            //We would launch the SettingActivity here, or something...
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
+    // TODO: add license info and maybe settings options items
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        //Inflate the options menu along the action bar
+//        getMenuInflater().inflate(R.menu.main, menu);
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        //Handle action bar item clicks
+//        /*Remember: Specify a parent activity in the manifest so Android
+//        *           handles Home/Up button clicks automagically*/
+//        int id = item.getItemId();
+//
+//        //Setting action
+//        if (id == R.id.action_settings) {
+//            //We would launch the SettingActivity here, or something...
+//            return true;
+//        }
+//
+//        return super.onOptionsItemSelected(item);
+//    }
 
     public void displayStopsFragment() {
         pager.setCurrentItem(1);
@@ -221,7 +261,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // region BusStopSelectionQueue
     BusStopSelectionQueue.Listener stopDetailsListener;
     @Override
-    public void setStopDetailsQueueListener(@Nullable Listener listener) {
+    public void setStopDetailsQueueListener(@Nullable BusStopSelectionQueue.Listener listener) {
         stopDetailsListener = listener;
     }
 

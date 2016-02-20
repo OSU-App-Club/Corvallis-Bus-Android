@@ -27,7 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import osu.appclub.corvallisbus.ActivityRunningMonitor;
 import osu.appclub.corvallisbus.BusStopSelectionQueue;
+import osu.appclub.corvallisbus.ResourceLoadState;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
 import osu.appclub.corvallisbus.R;
@@ -40,10 +42,15 @@ import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
  * Created by rikkigibson on 1/20/16.
  */
 public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.LocationAvailableListener,
-        GoogleMap.OnMarkerClickListener, GoogleMap.InfoWindowAdapter, BusStopSelectionQueue.Listener {
+        GoogleMap.OnMarkerClickListener, GoogleMap.InfoWindowAdapter, BusStopSelectionQueue.Listener,
+        ActivityRunningMonitor.Listener {
     private final Context context;
     private final LocationProvider locationProvider;
+    private final ActivityRunningMonitor activityRunningMonitor;
+
+    private ResourceLoadState markersLoadState = ResourceLoadState.NotStarted;
     private final Map<Marker, BusStop> markersLookup = new HashMap<>();
+
     private final BusStopSelectionQueue stopSelectionQueue;
     private GoogleMap googleMap;
     private final LatLng CORVALLIS_LATLNG = new LatLng(44.56802, -123.27926);
@@ -62,12 +69,28 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
     public OnStopSelectedListener stopSelectedListener;
 
-    public BusMapPresenter(Context context, LocationProvider locationProvider, BusStopSelectionQueue stopSelectionQueue) {
+    public BusMapPresenter(Context context, LocationProvider locationProvider,
+                           BusStopSelectionQueue stopSelectionQueue,
+                           ActivityRunningMonitor activityRunningMonitor) {
         this.context = context;
         this.locationProvider = locationProvider;
         this.stopSelectionQueue = stopSelectionQueue;
+        this.activityRunningMonitor = activityRunningMonitor;
         stopSelectionQueue.setStopDetailsQueueListener(this);
+        activityRunningMonitor.addActivityRunningListener(this);
     }
+
+    // region ActivityRunningMonitor.Listener
+    @Override
+    public void onResume() {
+        initMarkers();
+    }
+
+    @Override
+    public void onPause() {
+
+    }
+    // endregion
 
     /**
      * OnMapReadyCallback
@@ -127,6 +150,11 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     }
 
     void initMarkers() {
+        if (markersLoadState != ResourceLoadState.NotStarted) {
+            return;
+        }
+        markersLoadState = ResourceLoadState.Started;
+
         new AsyncTask<Void, Void, BusStaticData>() {
             @Override
             protected BusStaticData doInBackground(Void... params) {
@@ -135,13 +163,22 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
             @Override
             protected void onPostExecute(@Nullable BusStaticData busStaticData) {
-                if (busStaticData == null) {
-                    Toast.makeText(context, "Failed to load bus stops", Toast.LENGTH_SHORT)
-                            .show();
-                    // Try again after a brief interval
-                    handler.postDelayed(initMarkersRunnable, 3000);
+                if (markersLoadState == ResourceLoadState.Completed) {
+                    // prevent populating map multiple times
                     return;
                 }
+                if (busStaticData == null) {
+                    markersLoadState = ResourceLoadState.NotStarted;
+                    // Try again if load failed and app is running
+                    if (activityRunningMonitor.isActivityRunning()) {
+                        Toast.makeText(context, "Failed to load bus stops", Toast.LENGTH_SHORT)
+                                .show();
+                        handler.postDelayed(initMarkersRunnable, 5000);
+                    }
+                    return;
+                }
+                markersLoadState = ResourceLoadState.Completed;
+                activityRunningMonitor.removeActivityRunningListener(BusMapPresenter.this);
 
                 createMarkers(busStaticData.stops);
                 selectQueuedStopIfReady();
