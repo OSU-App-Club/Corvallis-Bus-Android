@@ -2,8 +2,10 @@ package osu.appclub.corvallisbus;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -17,6 +19,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -28,6 +31,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.models.AlertsItem;
 import osu.appclub.corvallisbus.models.BusStaticData;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
@@ -82,9 +86,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     // region ViewPager.OnPageChangeListener
     @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-    }
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) { }
 
     @Override
     public void onPageSelected(int position) {
@@ -104,9 +106,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     @Override
-    public void onPageScrollStateChanged(int state) {
-
-    }
+    public void onPageScrollStateChanged(int state) { }
     // endregion
 
     @Override
@@ -231,28 +231,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // endregion
 
     // TODO: add license info and maybe settings options items
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        //Inflate the options menu along the action bar
-//        getMenuInflater().inflate(R.menu.main, menu);
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        //Handle action bar item clicks
-//        /*Remember: Specify a parent activity in the manifest so Android
-//        *           handles Home/Up button clicks automagically*/
-//        int id = item.getItemId();
-//
-//        //Setting action
-//        if (id == R.id.action_settings) {
-//            //We would launch the SettingActivity here, or something...
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        //Inflate the options menu along the action bar
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks
+        // Remember: Specify a parent activity in the manifest so Android
+        //          handles Home/Up button clicks automagically
+        int id = item.getItemId();
+
+        // Setting action
+        if (id == R.id.action_about) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://rikkigibson.github.io/corvallisbus"));
+            startActivity(intent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     public void displayStopsFragment() {
         pager.setCurrentItem(1);

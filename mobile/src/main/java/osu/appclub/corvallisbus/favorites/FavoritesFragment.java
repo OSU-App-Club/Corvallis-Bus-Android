@@ -1,5 +1,6 @@
 package osu.appclub.corvallisbus.favorites;
 
+import android.app.Activity;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -11,12 +12,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import osu.appclub.corvallisbus.BusStopSelectionQueue;
+import osu.appclub.corvallisbus.MainActivity;
 import osu.appclub.corvallisbus.Refresher;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.LocationProvider;
@@ -95,22 +98,24 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        if (getActivity() instanceof LocationProvider) {
-            locationProvider = (LocationProvider) getActivity();
-        } else {
-            throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements LocationProvider.");
-        }
+        final MainActivity activity = (MainActivity)getActivity();
+        locationProvider = activity;
+        stopSelectionQueue = activity;
 
-        if (getActivity() instanceof BusStopSelectionQueue) {
-            stopSelectionQueue = (BusStopSelectionQueue) getActivity();
-        } else {
-            throw new UnsupportedOperationException("Favorites fragment must be attached to an activity which implements BusStopSelectionQueue.");
-        }
+        adapter = new FavoritesListAdapter(activity, listItems);
 
-        adapter = new FavoritesListAdapter(getActivity(), listItems);
-        getListView().setAdapter(adapter);
+        View placeholder = activity.findViewById(R.id.favorites_placeholder);
+        placeholder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activity.displayStopsFragment();
+            }
+        });
 
-        swipeRefreshLayout = (SwipeRefreshLayout) getActivity().findViewById(R.id.favorites_swipe_container);
+        ListView listView = getListView();
+        listView.setAdapter(adapter);
+
+        swipeRefreshLayout = (SwipeRefreshLayout) activity.findViewById(R.id.favorites_swipe_container);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
