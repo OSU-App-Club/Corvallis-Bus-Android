@@ -308,6 +308,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
     @Override
     public View getInfoWindow(Marker marker) {
+        // Showing an info window causes the selected stop marker to jump to the front.
         LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         return inflater.inflate(R.layout.empty_info_window, null);
     }
