@@ -169,7 +169,7 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
 
         if (listItems.get(info.position).isNearestStop) {
             menu.setHeaderTitle(listItems.get(info.position).stopName + " (nearest stop)");
-            MenuItem addItem = menu.add("Add to Favorites");
+            MenuItem addItem = menu.add("Add Favorite");
             addItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {

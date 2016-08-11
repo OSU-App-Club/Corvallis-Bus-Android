@@ -27,17 +27,12 @@ import osu.appclub.corvallisbus.models.AlertsItem;
 
 
 public class AlertsFragment extends ListFragment {
-    final AlertsItem PLACEHOLDER_ITEM;
     final ArrayList<AlertsItem> listItems = new ArrayList<>();
     AlertsListAdapter adapter;
     SwipeRefreshLayout swipeRefreshLayout;
 
     //Required empty public constructor
     public AlertsFragment() {
-        PLACEHOLDER_ITEM = new AlertsItem();
-        PLACEHOLDER_ITEM.title = "No current service alerts!";
-        PLACEHOLDER_ITEM.dateText = "Tap to view the service alerts website";
-        PLACEHOLDER_ITEM.link = Uri.parse("http://www.corvallisoregon.gov/index.aspx?page=1105");
     }
 
     //Create a new instance of this fragment using the provided parameters.
@@ -84,6 +79,17 @@ public class AlertsFragment extends ListFragment {
             }
         });
 
+        View placeholder = getActivity().findViewById(R.id.alerts_placeholder);
+        placeholder.setOnClickListener(new View.OnClickListener() {
+            final Uri SERVICE_ALERTS_URI = Uri.parse("http://www.corvallisoregon.gov/index.aspx?page=1105");
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, SERVICE_ALERTS_URI);
+                startActivity(intent);
+            }
+        });
+
+        getListView().setEmptyView(placeholder);
         // This crazy setup is the "best" way to make the layout start refreshing as soon as it is able.
         swipeRefreshLayout.getViewTreeObserver()
                 .addOnGlobalLayoutListener(
@@ -139,10 +145,6 @@ public class AlertsFragment extends ListFragment {
                 }
                 else {
                     listItems.addAll(alertsItems);
-                }
-
-                if (listItems.isEmpty()) {
-                    listItems.add(PLACEHOLDER_ITEM);
                 }
 
                 // better to just have the app explode if this thing is somehow null

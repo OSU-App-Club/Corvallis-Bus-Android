@@ -11,4 +11,9 @@
         Add your frequently used stops to Favorites.
         \nTap to browse stops.
     </string>
+
+    <string name="alerts_placeholder">
+        Stop closures and detours are announced here.
+        \nTap to view the service alerts website.
+    </string>
 </resources>
