@@ -31,3 +31,8 @@ proguard/
 /.idea/libraries
 .DS_Store
 .idea/dictionaries
+
+# Keys
+*.jks
+keys.xml
+
