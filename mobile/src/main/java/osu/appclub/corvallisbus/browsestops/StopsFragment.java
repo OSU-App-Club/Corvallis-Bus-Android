@@ -56,6 +56,10 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
 
         if (isVisibleToUser) {
             arrivalsRefresher.restart();
+
+            List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
+            mapPresenter.updateFavoriteStopsState(favoriteStopIds);
+            updateFavoriteButtonState(favoriteStopIds.contains(selectedStopId));
         }
         else {
             arrivalsRefresher.stop();

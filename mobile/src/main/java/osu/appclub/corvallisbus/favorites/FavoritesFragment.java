@@ -1,16 +1,21 @@
 package osu.appclub.corvallisbus.favorites;
 
 import android.app.Activity;
+import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
+import android.view.ActionProvider;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -115,6 +120,7 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
         ListView listView = getListView();
         listView.setAdapter(adapter);
         listView.setEmptyView(placeholder);
+        registerForContextMenu(listView);
 
         swipeRefreshLayout = (SwipeRefreshLayout) activity.findViewById(R.id.favorites_swipe_container);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -142,6 +148,72 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
     public void onListItemClick(ListView l, View v, int position, long id) {
         FavoriteStopViewModel selectedStop = listItems.get(position);
         stopSelectionQueue.enqueueBusStop(selectedStop.stopID);
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        if (v.getId() != android.R.id.list) { return; }
+
+        final AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
+
+        MenuItem viewDetailItem = menu.add("View Details");
+        viewDetailItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                stopSelectionQueue.enqueueBusStop(listItems.get(info.position).stopID);
+                return true;
+            }
+        });
+
+        if (listItems.get(info.position).isNearestStop) {
+            menu.setHeaderTitle(listItems.get(info.position).stopName + " (nearest stop)");
+            MenuItem addItem = menu.add("Add to Favorites");
+            addItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    addFavorite(info.position);
+                    return true;
+                }
+            });
+        } else {
+            menu.setHeaderTitle(listItems.get(info.position).stopName);
+            MenuItem removeItem = menu.add("Remove");
+            removeItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    removeFavorite(info.position);
+                    return true;
+                }
+            });
+        }
+    }
+
+    void removeFavorite(int position) {
+        FavoriteStopViewModel stopToRemove = listItems.get(position);
+        if (stopToRemove.isNearestStop) {
+            return;
+        }
+
+        Context context = getContext();
+        List<Integer> stopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
+        stopIds.remove((Integer)stopToRemove.stopID);
+        CorvallisBusPreferences.setFavoriteStopIds(context, stopIds);
+        startLoadingFavorites();
+    }
+
+    void addFavorite(int position) {
+        FavoriteStopViewModel stopToAdd = listItems.get(position);
+        if (!stopToAdd.isNearestStop) {
+            return;
+        }
+
+        Context context = getContext();
+        List<Integer> stopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
+        stopIds.add(stopToAdd.stopID);
+        CorvallisBusPreferences.setFavoriteStopIds(context, stopIds);
+        startLoadingFavorites();
     }
 
     /**
@@ -190,7 +262,7 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
                 else {
                     listItems.addAll(favoriteStopViewModels);
                 }
-                adapter.notifyDataSetInvalidated();
+                adapter.notifyDataSetChanged();
 
                 if (swipeRefreshLayout != null) {
                     swipeRefreshLayout.setRefreshing(false);

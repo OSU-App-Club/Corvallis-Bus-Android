@@ -186,6 +186,22 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         }.execute();
     }
 
+    public void updateFavoriteStopsState(List<Integer> favoriteStopIds) {
+        if (markersLoadState != ResourceLoadState.Completed) { return; }
+
+        for (Map.Entry<Marker, BusStop> kvp : markersLookup.entrySet()) {
+            if (favoriteStopIds.contains(kvp.getValue().id)) {
+                kvp.getKey().setIcon(kvp.getKey() == currentMarker
+                    ? gold_selected_icon
+                    : gold_icon);
+            } else {
+                kvp.getKey().setIcon(kvp.getKey() == currentMarker
+                        ? green_selected_icon
+                        : green_icon);
+            }
+        }
+    }
+
     void createMarkers(SparseArray<BusStop> busStops) {
         List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
 
