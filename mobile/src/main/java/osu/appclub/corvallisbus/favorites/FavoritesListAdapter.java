@@ -3,6 +3,7 @@ package osu.appclub.corvallisbus.favorites;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,13 +47,21 @@ public class FavoritesListAdapter extends ArrayAdapter<FavoriteStopViewModel> {
 
         TextView firstRouteName = (TextView)convertView.findViewById(R.id.firstRouteName);
         firstRouteName.setText(favorite.firstRouteName);
-        firstRouteName.setBackgroundColor(favorite.firstRouteColor.isEmpty() ? Color.GRAY : Translation.toColorValue(favorite.firstRouteColor));
+
+        GradientDrawable firstBG = new GradientDrawable();
+        firstBG.setColor(favorite.firstRouteColor.isEmpty() ? Color.GRAY : Translation.toColorValue(favorite.firstRouteColor));
+        firstBG.setCornerRadius(15);
+        firstRouteName.setBackground(firstBG);
 
         ((TextView)convertView.findViewById(R.id.firstRouteArrivals)).setText(favorite.firstRouteArrivals);
 
         TextView secondRouteName = (TextView)convertView.findViewById(R.id.secondRouteName);
         secondRouteName.setText(favorite.secondRouteName);
-        secondRouteName.setBackgroundColor(Translation.toColorValue(favorite.secondRouteColor));
+
+        GradientDrawable secondBG = new GradientDrawable();
+        secondBG.setColor(Translation.toColorValue(favorite.secondRouteColor));
+        secondBG.setCornerRadius(15);
+        secondRouteName.setBackground(secondBG);
 
         ((TextView)convertView.findViewById(R.id.secondRouteArrivals)).setText(favorite.secondRouteArrivals);
 

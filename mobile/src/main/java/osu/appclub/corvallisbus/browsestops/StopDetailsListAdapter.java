@@ -2,6 +2,7 @@ package osu.appclub.corvallisbus.browsestops;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.maps.android.heatmaps.Gradient;
 
 import java.util.ArrayList;
 
@@ -32,10 +35,15 @@ public class StopDetailsListAdapter extends ArrayAdapter<RouteDetailsViewModel> 
         }
 
         final RouteDetailsViewModel routeDetails = getItem(position);
+        assert routeDetails != null;
 
         TextView routeName = (TextView) convertView.findViewById(R.id.routeName);
         routeName.setText(routeDetails.routeName);
-        routeName.setBackgroundColor(routeDetails.routeColor);
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(20);
+        bg.setColor(routeDetails.routeColor);
+        routeName.setBackground(bg);
 
         ((TextView)convertView.findViewById(R.id.arrivalsSummary)).setText(routeDetails.arrivalsSummary);
         ((TextView)convertView.findViewById(R.id.scheduleSummary)).setText(routeDetails.scheduleSummary);
