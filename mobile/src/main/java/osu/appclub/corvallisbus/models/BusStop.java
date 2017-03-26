@@ -16,6 +16,7 @@ public class BusStop {
     public String name;
     public LatLng location;
     public String[] routeNames;
+    public double bearing;
 
     public static class Deserializer implements JsonDeserializer<BusStop> {
 
@@ -29,6 +30,7 @@ public class BusStop {
             busStop.name = jsonObject.get("name").getAsString();
             busStop.location = new LatLng(jsonObject.get("lat").getAsDouble(), jsonObject.get("lng").getAsDouble());
             busStop.routeNames = context.deserialize(jsonObject.get("routeNames"), String[].class);
+            busStop.bearing = jsonObject.get("bearing").getAsDouble();
 
             return busStop;
         }

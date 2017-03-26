@@ -100,10 +100,10 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         this.googleMap = googleMap;
         googleMap.setInfoWindowAdapter(this);
 
-        green_icon = BitmapDescriptorFactory.fromResource(R.drawable.greenoval);
-        green_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.greenoval_highlighted_big);
-        gold_icon = BitmapDescriptorFactory.fromResource(R.drawable.goldoval);
-        gold_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.goldoval_highlighted_big);
+        green_icon = BitmapDescriptorFactory.fromResource(R.drawable.green_needle);
+        green_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.green_needle_highlighted_big);
+        gold_icon = BitmapDescriptorFactory.fromResource(R.drawable.gold_needle);
+        gold_selected_icon = BitmapDescriptorFactory.fromResource(R.drawable.gold_needle_highlighted_big);
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CORVALLIS_LATLNG, 14.0f));
 
@@ -212,6 +212,8 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
             boolean isFavorite = favoriteStopIds.contains(busStop.id);
             options.position(busStop.location);
             options.icon(isFavorite ? gold_icon : green_icon);
+            options.rotation((float) busStop.bearing + 90);
+            options.anchor(0.5f, 0.5f);
             Marker marker = googleMap.addMarker(options);
             markersLookup.put(marker, busStop);
         }
