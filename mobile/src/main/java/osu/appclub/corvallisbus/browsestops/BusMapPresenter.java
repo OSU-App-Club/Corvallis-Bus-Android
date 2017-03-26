@@ -16,6 +16,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -98,6 +99,11 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
+
+        UiSettings settings = googleMap.getUiSettings();
+        settings.setRotateGesturesEnabled(false);
+        settings.setTiltGesturesEnabled(false);
+
         googleMap.setInfoWindowAdapter(this);
 
         green_icon = BitmapDescriptorFactory.fromResource(R.drawable.green_needle);
@@ -191,11 +197,11 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
         for (Map.Entry<Marker, BusStop> kvp : markersLookup.entrySet()) {
             if (favoriteStopIds.contains(kvp.getValue().id)) {
-                kvp.getKey().setIcon(kvp.getKey() == currentMarker
+                kvp.getKey().setIcon(kvp.getKey().equals(currentMarker)
                     ? gold_selected_icon
                     : gold_icon);
             } else {
-                kvp.getKey().setIcon(kvp.getKey() == currentMarker
+                kvp.getKey().setIcon(kvp.getKey().equals(currentMarker)
                         ? green_selected_icon
                         : green_icon);
             }
