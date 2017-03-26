@@ -173,7 +173,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             if (CorvallisBusPreferences.getWasLocationRequested(this)) {
                 fireOnLocationResolved();
             } else {
-                CorvallisBusPreferences.setWasLocationRequested(this, true);
                 ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, 0);
             }
         }
@@ -194,8 +193,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (grantResults.length != 0) {
+        if (grantResults.length != 0 && apiClient != null && apiClient.isConnected()) {
             // Continue regardless of whether location permissions are granted or not
+            CorvallisBusPreferences.setWasLocationRequested(this, true);
             fireOnLocationResolved();
         }
     }
@@ -223,7 +223,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // region GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
     @Override
     public void onConnected(Bundle bundle) {
-        fireOnLocationResolved();
+        if (CorvallisBusPreferences.getWasLocationRequested(this)) {
+            fireOnLocationResolved();
+        }
     }
 
     @Override
