@@ -113,13 +113,6 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CORVALLIS_LATLNG, 14.0f));
 
-        try {
-            googleMap.setMyLocationEnabled(true);
-        }
-        catch (SecurityException e) {
-            Log.d("osu.appclub", e.getMessage());
-        }
-
         googleMap.setOnMarkerClickListener(this);
 
         if (locationProvider.isLocationResolved()) {
@@ -141,6 +134,13 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
     }
 
     void initializeUserLocation() {
+        try {
+            googleMap.setMyLocationEnabled(true);
+        }
+        catch (SecurityException e) {
+            Log.d("osu.appclub", e.getMessage());
+        }
+
         Location location = locationProvider.getUserLocation();
         if (location != null) {
             float[] distanceResult = new float[1];

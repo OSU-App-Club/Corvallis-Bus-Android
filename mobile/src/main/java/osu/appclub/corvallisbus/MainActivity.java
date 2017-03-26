@@ -31,6 +31,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.models.AlertsItem;
 import osu.appclub.corvallisbus.models.BusStaticData;
 
@@ -165,12 +166,18 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // region LocationProvider
     @Override
     public boolean isLocationResolved() {
-        // TODO: check if location services enabled and if not prompt to open settings
         int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
         boolean hasPermission = permission == PackageManager.PERMISSION_GRANTED;
+
         if (!hasPermission) {
-            ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, 0);
+            if (CorvallisBusPreferences.getWasLocationRequested(this)) {
+                fireOnLocationResolved();
+            } else {
+                CorvallisBusPreferences.setWasLocationRequested(this, true);
+                ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, 0);
+            }
         }
+
         return apiClient != null && apiClient.isConnected() && hasPermission;
     }
 

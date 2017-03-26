@@ -19,6 +19,7 @@ public class CorvallisBusPreferences {
 
     public static final String PREFERENCES_KEY = "osu.appclub.corvallisbus";
     public static final String FAVORITE_STOPS_KEY = "favoriteStops";
+    public static final String LOCATION_REQUESTED_KEY = "locationRequested";
 
     @Nullable
     private static List<Integer> cachedFavoriteStopIds;
@@ -43,6 +44,18 @@ public class CorvallisBusPreferences {
         SharedPreferences.Editor preferencesEditor = context.getSharedPreferences(PREFERENCES_KEY, 0).edit();
         String favoriteStopsJson = gson.toJson(favoriteStopIds);
         preferencesEditor.putString(FAVORITE_STOPS_KEY, favoriteStopsJson);
+        preferencesEditor.apply();
+    }
+
+    public static boolean getWasLocationRequested(@NonNull Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
+        boolean wasLocationRequested = preferences.getBoolean(LOCATION_REQUESTED_KEY, false);
+        return wasLocationRequested;
+    }
+
+    public static void setWasLocationRequested(@NonNull Context context, boolean wasLocationRequested) {
+        SharedPreferences.Editor preferencesEditor = context.getSharedPreferences(PREFERENCES_KEY, 0).edit();
+        preferencesEditor.putBoolean(LOCATION_REQUESTED_KEY, wasLocationRequested);
         preferencesEditor.apply();
     }
 }
