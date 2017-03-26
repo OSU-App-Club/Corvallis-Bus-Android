@@ -3,7 +3,6 @@
     package="osu.appclub.corvallisbus">
 
     <!-- Permissions needed -->
-    <!-- TODO: Does this follow Android's new permission prompt method? -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
