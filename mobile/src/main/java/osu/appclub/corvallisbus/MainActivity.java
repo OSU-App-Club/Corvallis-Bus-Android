@@ -168,9 +168,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public boolean isLocationResolved() {
         int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
         boolean hasPermission = permission == PackageManager.PERMISSION_GRANTED;
-
+        boolean wasLocationRequested = CorvallisBusPreferences.getWasLocationRequested(this);
         if (!hasPermission) {
-            if (CorvallisBusPreferences.getWasLocationRequested(this)) {
+            if (wasLocationRequested) {
                 fireOnLocationResolved();
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, 0);
@@ -223,7 +223,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // region GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
     @Override
     public void onConnected(Bundle bundle) {
-        if (CorvallisBusPreferences.getWasLocationRequested(this)) {
+        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        boolean hasPermission = permission == PackageManager.PERMISSION_GRANTED;
+        if (hasPermission || CorvallisBusPreferences.getWasLocationRequested(this)) {
             fireOnLocationResolved();
         }
     }
