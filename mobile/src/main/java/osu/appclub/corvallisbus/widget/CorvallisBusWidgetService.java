@@ -97,12 +97,12 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         Log.d("osu.appclub", "WIDGET: RemoteViewsFactory.onDataSetChanged called");
         List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
 
+        favoriteStops.clear();
         List<FavoriteStopViewModel> newFavorites = CorvallisBusAPIClient.getFavoriteStops(favoriteStopIds, null);
         if (newFavorites == null) {
-            favoriteStops.clear();
             Toast.makeText(context, "Corvallis Bus failed to load favorites", Toast.LENGTH_SHORT).show();
         } else {
-            favoriteStops = newFavorites;
+            favoriteStops.addAll(newFavorites);
         }
     }
 

@@ -12,9 +12,10 @@ import osu.appclub.corvallisbus.MainActivity;
 import osu.appclub.corvallisbus.R;
 
 public class CorvallisBusWidgetProvider extends AppWidgetProvider {
+
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-
+        Log.d("osu.appclub", "WIDGET: AppWidgetProvider.onUpdate called");
         for (int id : appWidgetIds) {
             Intent intent = new Intent(context, CorvallisBusWidgetService.class);
             RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.corvallisbus_appwidget);
