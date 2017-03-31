@@ -52,22 +52,23 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.favorites_row);
         FavoriteStopViewModel favorite = favoriteStops.get(i);
 
+        int textColor = ContextCompat.getColor(context, R.color.colorWidgetText);
         rv.setTextViewText(R.id.stopName, favorite.stopName);
-        rv.setTextColor(R.id.stopName, ContextCompat.getColor(context, android.R.color.primary_text_light));
+        rv.setTextColor(R.id.stopName, textColor);
 
         rv.setViewVisibility(R.id.isNearestStop, favorite.isNearestStop ? View.VISIBLE : View.INVISIBLE);
         rv.setTextViewText(R.id.distanceFromUser, favorite.distanceFromUser);
-        rv.setTextColor(R.id.distanceFromUser, ContextCompat.getColor(context, android.R.color.secondary_text_light));
+        rv.setTextColor(R.id.distanceFromUser, textColor);
 
         rv.setTextViewText(R.id.firstRouteName, favorite.firstRouteName);
         rv.setInt(R.id.firstRouteName, "setBackgroundColor", Translation.toColorValue(favorite.firstRouteColor));
         rv.setTextViewText(R.id.firstRouteArrivals, favorite.firstRouteArrivals);
-        rv.setTextColor(R.id.firstRouteArrivals, ContextCompat.getColor(context, android.R.color.primary_text_light));
+        rv.setTextColor(R.id.firstRouteArrivals, textColor);
 
         rv.setTextViewText(R.id.secondRouteName, favorite.secondRouteName);
         rv.setInt(R.id.secondRouteName, "setBackgroundColor", Translation.toColorValue(favorite.secondRouteColor));
         rv.setTextViewText(R.id.secondRouteArrivals, favorite.secondRouteArrivals);
-        rv.setTextColor(R.id.secondRouteArrivals, ContextCompat.getColor(context, android.R.color.primary_text_light));
+        rv.setTextColor(R.id.secondRouteArrivals, textColor);
 
         return rv;
     }
@@ -100,7 +101,8 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         favoriteStops.clear();
         List<FavoriteStopViewModel> newFavorites = CorvallisBusAPIClient.getFavoriteStops(favoriteStopIds, null);
         if (newFavorites == null) {
-            Toast.makeText(context, "Corvallis Bus failed to load favorites", Toast.LENGTH_SHORT).show();
+            // TODO: send intent back to provider to display toast
+            Log.d("osu.appclub", "WIDGET: Failed to load favorites");
         } else {
             favoriteStops.addAll(newFavorites);
         }

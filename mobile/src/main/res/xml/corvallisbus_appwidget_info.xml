@@ -3,6 +3,7 @@
     android:minWidth="180dp"
     android:minHeight="40dp"
     android:updatePeriodMillis="30000"
+    android:configure="osu.appclub.corvallisbus.MainActivity"
     android:initialLayout="@layout/corvallisbus_appwidget"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen">

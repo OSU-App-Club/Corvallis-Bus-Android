@@ -4,4 +4,6 @@
     <color name="colorPrimaryDark">#26706D</color>
     <color name="colorAccent">#A1CDCB</color>
     <color name="colorFavorite">#94C0EF</color>
+    <color name="colorWidgetBackground">#DDEEEEEE</color>
+    <color name="colorWidgetText">#444444</color>
 </resources>
