@@ -61,6 +61,7 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         rv.setTextColor(R.id.distanceFromUser, textColor);
 
         rv.setTextViewText(R.id.firstRouteName, favorite.firstRouteName);
+        // TODO: figure out how to set background of gradient drawable (does it need to be in layout XML and get an ID?)
         rv.setInt(R.id.firstRouteName, "setBackgroundColor", Translation.toColorValue(favorite.firstRouteColor));
         rv.setTextViewText(R.id.firstRouteArrivals, favorite.firstRouteArrivals);
         rv.setTextColor(R.id.firstRouteArrivals, textColor);
