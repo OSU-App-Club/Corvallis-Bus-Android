@@ -12,6 +12,11 @@
         \nTap to browse stops.
     </string>
 
+    <string name="widget_placeholder">
+        No favorite stops to display.
+        \nTap to open the app.
+    </string>
+
     <string name="alerts_placeholder">
         Stop closures and detours are announced here.
         \nTap to view the service alerts website.

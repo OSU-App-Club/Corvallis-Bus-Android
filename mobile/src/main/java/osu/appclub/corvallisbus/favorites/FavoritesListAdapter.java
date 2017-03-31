@@ -21,8 +21,6 @@ import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
 import osu.appclub.corvallisbus.models.Translation;
 
 public class FavoritesListAdapter extends ArrayAdapter<FavoriteStopViewModel> {
-
-    // TODO: are these instance variables needed?
     private final Context context;
     private final ArrayList<FavoriteStopViewModel> favorites;
 
