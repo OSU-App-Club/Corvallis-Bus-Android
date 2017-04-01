@@ -40,8 +40,9 @@ public class StopDetailsListAdapter extends ArrayAdapter<RouteDetailsViewModel> 
         TextView routeName = (TextView) convertView.findViewById(R.id.routeName);
         routeName.setText(routeDetails.routeName);
 
+        float dp = getContext().getResources().getDisplayMetrics().density;
         GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(20);
+        bg.setCornerRadius(6.67f*dp);
         bg.setColor(routeDetails.routeColor);
         routeName.setBackground(bg);
 

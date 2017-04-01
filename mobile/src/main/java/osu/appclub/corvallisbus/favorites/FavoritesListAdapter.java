@@ -46,9 +46,11 @@ public class FavoritesListAdapter extends ArrayAdapter<FavoriteStopViewModel> {
         TextView firstRouteName = (TextView)convertView.findViewById(R.id.firstRouteName);
         firstRouteName.setText(favorite.firstRouteName);
 
+        float dp = context.getResources().getDisplayMetrics().density;
+
         GradientDrawable firstBG = new GradientDrawable();
         firstBG.setColor(favorite.firstRouteColor.isEmpty() ? Color.GRAY : Translation.toColorValue(favorite.firstRouteColor));
-        firstBG.setCornerRadius(15);
+        firstBG.setCornerRadius(dp*5);
         firstRouteName.setBackground(firstBG);
 
         ((TextView)convertView.findViewById(R.id.firstRouteArrivals)).setText(favorite.firstRouteArrivals);
@@ -58,7 +60,7 @@ public class FavoritesListAdapter extends ArrayAdapter<FavoriteStopViewModel> {
 
         GradientDrawable secondBG = new GradientDrawable();
         secondBG.setColor(Translation.toColorValue(favorite.secondRouteColor));
-        secondBG.setCornerRadius(15);
+        secondBG.setCornerRadius(dp*5);
         secondRouteName.setBackground(secondBG);
 
         ((TextView)convertView.findViewById(R.id.secondRouteArrivals)).setText(favorite.secondRouteArrivals);
