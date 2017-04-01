@@ -1,18 +1,21 @@
 package osu.appclub.corvallisbus.widget;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
-import android.widget.Toast;
 
-import com.google.maps.android.heatmaps.Gradient;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,18 +37,24 @@ public class CorvallisBusWidgetService extends RemoteViewsService {
 class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
     private List<FavoriteStopViewModel> favoriteStops = new ArrayList<>();
     private final Context context;
+    private final GoogleApiClient apiClient;
+
     CorvallisBusRemoteViewsFactory(Context context) {
         this.context = context;
+        apiClient = new GoogleApiClient.Builder(context)
+                .addApi(LocationServices.API)
+                .build();
     }
 
     @Override
     public void onCreate() {
         Log.d("osu.appclub", "WIDGET: RemoteViewsFactory.onCreate called");
+        apiClient.connect();
     }
 
     @Override
     public void onDestroy() {
-
+        apiClient.disconnect();
     }
 
     @Override
@@ -114,13 +123,23 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         return 1;
     }
 
+    private Location getUserLocation() {
+        int permission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION);
+        if (permission == PackageManager.PERMISSION_GRANTED) {
+            return LocationServices.FusedLocationApi.getLastLocation(apiClient);
+        } else {
+            return null;
+        }
+    }
+
     @Override
     public void onDataSetChanged() {
         Log.d("osu.appclub", "WIDGET: RemoteViewsFactory.onDataSetChanged called");
         List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
+        Location loc = getUserLocation();
 
         favoriteStops.clear();
-        List<FavoriteStopViewModel> newFavorites = CorvallisBusAPIClient.getFavoriteStops(favoriteStopIds, null);
+        List<FavoriteStopViewModel> newFavorites = CorvallisBusAPIClient.getFavoriteStops(favoriteStopIds, loc);
         if (newFavorites == null) {
             // TODO: send intent back to provider to display toast
             Log.d("osu.appclub", "WIDGET: Failed to load favorites");
