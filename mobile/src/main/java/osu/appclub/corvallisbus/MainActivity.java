@@ -38,6 +38,9 @@ import osu.appclub.corvallisbus.models.BusStaticData;
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopSelectionQueue,
         ViewPager.OnPageChangeListener, ActivityRunningMonitor {
+    public static final String VIEW_STOP_ACTION = "osu.appclub.corvallisbus.VIEW_STOP_ACTION";
+    public static final String EXTRA_STOP_ID = "osu.appclub.corvallisbus.EXTRA_STOP_ID";
+
     private GoogleApiClient apiClient;
     private Toolbar toolbar;
     private ViewPager pager;
@@ -83,6 +86,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+
+        int stopID = getIntent().getIntExtra(EXTRA_STOP_ID, -1);
+        if (stopID != -1) {
+            enqueueBusStop(stopID);
+        }
     }
 
     // region ViewPager.OnPageChangeListener

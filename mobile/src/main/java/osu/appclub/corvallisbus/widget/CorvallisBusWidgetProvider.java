@@ -23,8 +23,13 @@ public class CorvallisBusWidgetProvider extends AppWidgetProvider {
             rv.setEmptyView(R.id.widget_list, R.id.widget_placeholder);
 
             Intent launchApp = new Intent(context, MainActivity.class);
-            PendingIntent pi = PendingIntent.getActivity(context, 0, launchApp, 0);
-            rv.setOnClickPendingIntent(R.id.widget_placeholder, pi);
+            PendingIntent piPlaceholder = PendingIntent.getActivity(context, 0, launchApp, 0);
+            rv.setOnClickPendingIntent(R.id.widget_placeholder, piPlaceholder);
+
+            Intent viewStopDetails = new Intent(context, MainActivity.class);
+            viewStopDetails.setAction(MainActivity.VIEW_STOP_ACTION);
+            PendingIntent piStopDetails = PendingIntent.getActivity(context, 0, viewStopDetails, 0);
+            rv.setPendingIntentTemplate(R.id.widget_list, piStopDetails);
 
             appWidgetManager.updateAppWidget(id, rv);
         }

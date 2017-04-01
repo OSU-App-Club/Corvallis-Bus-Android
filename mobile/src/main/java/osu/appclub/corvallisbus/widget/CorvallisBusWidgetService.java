@@ -12,6 +12,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import osu.appclub.corvallisbus.MainActivity;
 import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
@@ -70,6 +71,10 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         rv.setInt(R.id.secondRouteName, "setBackgroundColor", Translation.toColorValue(favorite.secondRouteColor));
         rv.setTextViewText(R.id.secondRouteArrivals, favorite.secondRouteArrivals);
         rv.setTextColor(R.id.secondRouteArrivals, textColor);
+
+        Intent stopDetails = new Intent();
+        stopDetails.putExtra(MainActivity.EXTRA_STOP_ID, favorite.stopID);
+        rv.setOnClickFillInIntent(R.id.favorites_row, stopDetails);
 
         return rv;
     }
