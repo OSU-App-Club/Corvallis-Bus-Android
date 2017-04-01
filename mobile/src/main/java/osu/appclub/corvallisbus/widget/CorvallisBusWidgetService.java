@@ -8,12 +8,16 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
@@ -34,7 +38,7 @@ public class CorvallisBusWidgetService extends RemoteViewsService {
     }
 }
 
-class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
+class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private List<FavoriteStopViewModel> favoriteStops = new ArrayList<>();
     private final Context context;
     private final GoogleApiClient apiClient;
@@ -42,8 +46,30 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
     CorvallisBusRemoteViewsFactory(Context context) {
         this.context = context;
         apiClient = new GoogleApiClient.Builder(context)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        synchronized (this) {
+            notifyAll();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d("osu.appclub", "WIDGET: GoogleApiClient failed to connect with result: " + connectionResult);
+        synchronized (this) {
+            notifyAll();
+        }
     }
 
     @Override
@@ -124,6 +150,18 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
     }
 
     private Location getUserLocation() {
+        if (!apiClient.isConnected() && apiClient.isConnecting()) {
+            try {
+                Log.d("osu.appclub", "WIDGET: Waiting for Google client to connect");
+                synchronized (this) {
+                    wait();
+                }
+            }
+            catch (InterruptedException e) {
+                Log.d("osu.appclub", e.getMessage());
+            }
+        }
+
         int permission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION);
         if (permission == PackageManager.PERMISSION_GRANTED) {
             return LocationServices.FusedLocationApi.getLastLocation(apiClient);
