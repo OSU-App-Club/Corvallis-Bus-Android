@@ -38,7 +38,10 @@ public class CorvallisBusWidgetService extends RemoteViewsService {
     }
 }
 
-class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+class CorvallisBusRemoteViewsFactory implements
+        RemoteViewsService.RemoteViewsFactory,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
     private List<FavoriteStopViewModel> favoriteStops = new ArrayList<>();
     private final Context context;
     private final GoogleApiClient apiClient;
@@ -136,7 +139,7 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
 
     @Override
     public long getItemId(int i) {
-        return i;
+        return favoriteStops.get(i).stopID;
     }
 
     @Override
