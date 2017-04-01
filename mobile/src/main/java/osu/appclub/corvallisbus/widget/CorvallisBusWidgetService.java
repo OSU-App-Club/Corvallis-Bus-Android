@@ -58,7 +58,6 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_row);
         FavoriteStopViewModel favorite = favoriteStops.get(i);
 
-        int textColor = ContextCompat.getColor(context, R.color.colorWidgetText);
         rv.setTextViewText(R.id.stopName, favorite.stopName);
 
         rv.setViewVisibility(R.id.isNearestStop, favorite.isNearestStop ? View.VISIBLE : View.INVISIBLE);
@@ -68,12 +67,10 @@ class CorvallisBusRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
 
         rv.setTextViewText(R.id.firstRouteArrivals, favorite.firstRouteArrivals);
         rv.setImageViewBitmap(R.id.firstRouteBackground, getBackground(context, Translation.toColorValue(favorite.firstRouteColor)));
-        rv.setTextColor(R.id.firstRouteArrivals, textColor);
 
         rv.setTextViewText(R.id.secondRouteName, favorite.secondRouteName);
         rv.setTextViewText(R.id.secondRouteArrivals, favorite.secondRouteArrivals);
         rv.setImageViewBitmap(R.id.secondRouteBackground, getBackground(context, Translation.toColorValue(favorite.secondRouteColor)));
-        rv.setTextColor(R.id.secondRouteArrivals, textColor);
 
         Intent stopDetails = new Intent();
         stopDetails.putExtra(MainActivity.EXTRA_STOP_ID, favorite.stopID);
