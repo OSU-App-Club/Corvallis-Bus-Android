@@ -86,11 +86,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
-
-        int stopID = getIntent().getIntExtra(EXTRA_STOP_ID, -1);
-        if (stopID != -1) {
-            enqueueBusStop(stopID);
-        }
     }
 
     // region ViewPager.OnPageChangeListener
@@ -141,6 +136,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         isActivityRunning = true;
         for (ActivityRunningMonitor.Listener listener : new ArrayList<>(activityRunningListeners)) {
             listener.onResume();
+        }
+
+        Intent intent = getIntent();
+        int stopID = intent.getIntExtra(EXTRA_STOP_ID, -1);
+        if (stopID != -1) {
+            intent.removeExtra(EXTRA_STOP_ID);
+            enqueueBusStop(stopID);
         }
     }
 
