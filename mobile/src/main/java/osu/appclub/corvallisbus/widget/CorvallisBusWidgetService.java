@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -111,6 +112,8 @@ class CorvallisBusRemoteViewsFactory implements
 
         Intent stopDetails = new Intent();
         stopDetails.putExtra(MainActivity.EXTRA_STOP_ID, favorite.stopID);
+        stopDetails.setData(Uri.parse(stopDetails.toUri(Intent.URI_INTENT_SCHEME)));
+
         rv.setOnClickFillInIntent(R.id.widget_row, stopDetails);
 
         return rv;
