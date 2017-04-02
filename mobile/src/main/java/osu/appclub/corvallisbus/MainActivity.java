@@ -34,6 +34,7 @@ import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
 import osu.appclub.corvallisbus.models.AlertsItem;
 import osu.appclub.corvallisbus.models.BusStaticData;
+import osu.appclub.corvallisbus.widget.CorvallisBusWidgetProvider;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopSelectionQueue,
@@ -149,6 +150,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onPause() {
         super.onPause();
+
+        Intent updateWidgetItn = new Intent(this, CorvallisBusWidgetProvider.class);
+        updateWidgetItn.setAction(CorvallisBusWidgetProvider.UPDATE_ACTION);
+        sendBroadcast(updateWidgetItn);
+
         isActivityRunning = false;
         for (ActivityRunningMonitor.Listener listener : new ArrayList<>(activityRunningListeners)) {
             listener.onPause();

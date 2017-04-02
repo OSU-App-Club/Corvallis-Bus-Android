@@ -77,7 +77,6 @@ class CorvallisBusRemoteViewsFactory implements
 
     @Override
     public void onCreate() {
-        Log.d("osu.appclub", "WIDGET: RemoteViewsFactory.onCreate called");
         apiClient.connect();
     }
 
@@ -182,7 +181,6 @@ class CorvallisBusRemoteViewsFactory implements
         favoriteStops.clear();
         List<FavoriteStopViewModel> newFavorites = CorvallisBusAPIClient.getFavoriteStops(favoriteStopIds, loc);
         if (newFavorites == null) {
-            // TODO: send intent back to provider to display toast
             Log.d("osu.appclub", "WIDGET: Failed to load favorites");
         } else {
             favoriteStops.addAll(newFavorites);
