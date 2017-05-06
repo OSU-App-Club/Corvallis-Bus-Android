@@ -8,8 +8,8 @@ android {
         applicationId "osu.appclub.corvallisbus"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 18
-        versionName "1.2"
+        versionCode 20
+        versionName "1.2.1"
     }
     buildTypes {
         release {
