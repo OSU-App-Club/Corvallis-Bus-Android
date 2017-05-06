@@ -2,7 +2,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
     android:minHeight="80dp"
-    android:minResizeHeight="40dp"
+    android:minResizeHeight="80dp"
     android:updatePeriodMillis="30000"
     android:initialLayout="@layout/corvallisbus_appwidget"
     android:resizeMode="vertical"

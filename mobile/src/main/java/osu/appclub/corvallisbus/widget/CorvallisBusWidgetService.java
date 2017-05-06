@@ -177,7 +177,6 @@ class CorvallisBusRemoteViewsFactory implements
 
     @Override
     public void onDataSetChanged() {
-        Log.d("osu.appclub", "WIDGET: RemoteViewsFactory.onDataSetChanged called");
         List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
         Location loc = getUserLocation();
 
