@@ -3,7 +3,7 @@ This is the Android client for the [Corvallis Bus API](https://github.com/RikkiG
 
 ## Overview
 #### Main app
-The main app consists of 4 screens.
+The main app consists of 3 screens.
 
 **1. Favorites**  
 Allows users to quickly view arrival times for their favorite stops.
