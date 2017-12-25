@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.0'
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "osu.appclub.corvallisbus"
@@ -34,7 +34,6 @@ dependencies {
     compile 'com.github.ahorn:android-rss:v1.0-rc1'
     compile 'com.google.code.gson:gson:2.7'
     compile 'com.google.maps.android:android-maps-utils:0.4'
-
 }
 
 apply plugin: 'com.google.gms.google-services'
