@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import osu.appclub.corvallisbus.R;
+import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.AlertsItem;
 
 
@@ -54,8 +55,6 @@ public class AlertsFragment extends ListFragment {
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        super.onListItemClick(l, v, position, id);
-
         AlertsItem alertsItem = listItems.get(position);
         Intent intent = new Intent(Intent.ACTION_VIEW, alertsItem.link);
         try {
@@ -67,6 +66,7 @@ public class AlertsFragment extends ListFragment {
         }
     }
 
+    private static final Uri SERVICE_ALERTS_URI = Uri.parse("https://corvallisb.us/api/service-alerts/html");
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -81,7 +81,6 @@ public class AlertsFragment extends ListFragment {
 
         View placeholder = getActivity().findViewById(R.id.alerts_placeholder);
         placeholder.setOnClickListener(new View.OnClickListener() {
-            final Uri SERVICE_ALERTS_URI = Uri.parse("http://www.corvallisoregon.gov/index.aspx?page=1105");
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(Intent.ACTION_VIEW, SERVICE_ALERTS_URI);
@@ -118,21 +117,9 @@ public class AlertsFragment extends ListFragment {
 
             @Override
             protected List<AlertsItem> doInBackground(Void... params) {
-                try {
-                    RSSFeed feed = reader.load(FEED_URI);
-                    List<RSSItem> rssItems = feed.getItems();
-
-                    ArrayList<AlertsItem> alertsItems = new ArrayList<>(rssItems.size());
-                    for (RSSItem rssItem : rssItems) {
-                        alertsItems.add(AlertsItem.fromRSSItem(rssItem));
-                    }
-                    return alertsItems;
-                }
-                catch(Exception e) {
-                    Log.d("corvallisbus", "RSS reader failed to get items");
-                    Log.d("corvallisbus", e.getMessage());
-                    return null;
-                }
+                Log.d("osu.appclub", "Loading service alerts from background thread");
+                List<AlertsItem> alertsItems = CorvallisBusAPIClient.getServiceAlerts();
+                return alertsItems;
             }
 
             @Override

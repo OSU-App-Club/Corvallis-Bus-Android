@@ -1,12 +1,17 @@
 package osu.appclub.corvallisbus.dataaccess;
 
 import android.location.Location;
+import android.net.Uri;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import osu.appclub.corvallisbus.models.AlertsItem;
 import osu.appclub.corvallisbus.models.BusRoute;
 import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.FavoriteStopViewModel;
@@ -29,33 +35,24 @@ import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.RouteArrivalsSummary;
 import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
 
-/*
-
-Stops - Trasnit bus stop
-    * Stop ID
-    * Stop Name
-    * Lat, Lon position
-    * Routes associated with this stop
-
-Routes - Collection of Stops
-    * Route Identifier (Number or String)
-    * Path (Collection of Stop IDs)
-    * Color (Hex representation)
-    * URL (Route info -- Links back to Corvallis Transit website)
-    * Polyline (Encoded Polyline String for Google Maps API)
- */
-
-//API Production server - https://corvallisb.us/api/<ENDPOINT>
-//API GitHub - https://github.com/RikkiGibson/Corvallis-Bus-Server
-
 @WorkerThread
 public final class CorvallisBusAPIClient {
     static final String BASE_URL = "https://corvallisb.us/api";
     private static final Gson gson = new GsonBuilder()
+            .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
             .registerTypeAdapter(BusRoute.class, new BusRoute.Deserializer())
             .registerTypeAdapter(BusStop.class, new BusStop.Deserializer())
             .registerTypeAdapter(BusStaticData.class, new BusStaticData.Deserializer())
+            .registerTypeAdapter(Uri.class, new UriDeserializer())
             .create();
+
+    private static class UriDeserializer implements JsonDeserializer<Uri> {
+        @Override
+        public Uri deserialize(final JsonElement src, final Type srcType,
+                               final JsonDeserializationContext context) throws JsonParseException {
+            return Uri.parse(src.getAsString());
+        }
+    }
 
     private CorvallisBusAPIClient() {
 
@@ -148,5 +145,20 @@ public final class CorvallisBusAPIClient {
         }
 
         return viewModels;
+    }
+
+    private static final Type alertsItemsType = new TypeToken<List<AlertsItem>>(){}.getType();
+    @Nullable
+    public static List<AlertsItem> getServiceAlerts() {
+        try {
+            URL url = new URL(BASE_URL + "/service-alerts");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            InputStreamReader streamReader = new InputStreamReader(urlConnection.getInputStream());
+            List<AlertsItem> alertsItems = gson.fromJson(streamReader, alertsItemsType);
+            return alertsItems;
+        } catch (Exception e) {
+            Log.d("osu.appclub", e.getMessage());
+            return null;
+        }
     }
 }
