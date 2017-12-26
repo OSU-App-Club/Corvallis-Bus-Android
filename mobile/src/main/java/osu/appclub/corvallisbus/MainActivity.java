@@ -1,11 +1,13 @@
 package osu.appclub.corvallisbus;
 
 import android.Manifest;
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -16,49 +18,66 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.SparseArray;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.regex.Pattern;
 
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.dataaccess.CorvallisBusPreferences;
-import osu.appclub.corvallisbus.models.AlertsItem;
 import osu.appclub.corvallisbus.models.BusStaticData;
+import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.widget.CorvallisBusWidgetProvider;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationProvider, BusStopSelectionQueue,
-        ViewPager.OnPageChangeListener, ActivityRunningMonitor {
+public class MainActivity
+        extends AppCompatActivity
+        implements GoogleApiClient.ConnectionCallbacks,
+            GoogleApiClient.OnConnectionFailedListener,
+            LocationProvider,
+            BusStopSelectionQueue,
+            ViewPager.OnPageChangeListener,
+            ActivityRunningMonitor,
+            SearchView.OnQueryTextListener,
+            StopsSearchTask.Listener {
     public static final String VIEW_STOP_ACTION = "osu.appclub.corvallisbus.VIEW_STOP_ACTION";
     public static final String EXTRA_STOP_ID = "osu.appclub.corvallisbus.EXTRA_STOP_ID";
 
     private GoogleApiClient apiClient;
     private Toolbar toolbar;
     private ViewPager pager;
+    private SearchView searchView;
+
+    private static final class LoadStaticDataTask extends AsyncTask<Void, Void, BusStaticData> {
+        @Override
+        protected BusStaticData doInBackground(Void... params) {
+            return CorvallisBusAPIClient.getStaticData();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Kick off static data download task so it can be accessed quickly later
-        new AsyncTask<Void, Void, BusStaticData>() {
-            @Override
-            protected BusStaticData doInBackground(Void... params) {
-                return CorvallisBusAPIClient.getStaticData();
-            }
-        }.execute();
+        new LoadStaticDataTask().execute();
 
         // initial UI and Toolbar setup
         super.onCreate(savedInstanceState);
@@ -256,7 +275,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d("osu.appclub", "API client connection failed: " + connectionResult);
     }
     // endregion
@@ -267,10 +286,101 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         getMenuInflater().inflate(R.menu.main, menu);
 
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        assert searchManager != null;
 
+        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView.setOnQueryTextListener(this);
+        searchView.setSubmitButtonEnabled(false);
+        searchView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                Log.d("osu.appclub", "Focus changed to " + hasFocus);
+            }
+         });
         return true;
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return true;
+    }
+
+    private StopsSearchTask searchTask;
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        if (searchTask != null) {
+            searchTask.cancel(true);
+        }
+
+        if (newText.isEmpty()) {
+            searchView.setSuggestionsAdapter(null);
+        } else {
+            searchTask = new StopsSearchTask(new WeakReference<>(this), newText, getUserLocation());
+            searchTask.execute();
+        }
+        return true;
+    }
+
+    @Override
+    public void searchComplete(Cursor cursor) {
+        Log.d("osu.appclub", "Found " + cursor.getCount() + " results");
+        if (cursor.getCount() == 0) {
+            MatrixCursor placeholder = new MatrixCursor(new String[] { "_id" });
+            placeholder.addRow(new Object[] { 0 });
+            searchView.setSuggestionsAdapter(new CursorAdapter(this, placeholder, false) {
+                @Override
+                public View newView(Context context, Cursor cursor, ViewGroup parent) {
+                    LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    View view = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
+                    return view;
+                }
+
+                @Override
+                public void bindView(View view, Context context, Cursor cursor) {
+                    TextView text = (TextView) view.findViewById(android.R.id.text1);
+                    text.setText(R.string.search_no_results);
+                    view.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            // no-op
+                        }
+                    });
+                }
+            });
+        } else {
+            searchView.setSuggestionsAdapter(new CursorAdapter(this, cursor, false) {
+                @Override
+                public View newView(Context context, Cursor cursor, ViewGroup parent) {
+                    LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    View view = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
+                    return view;
+                }
+
+                @SuppressLint("DefaultLocale")
+                @Override
+                public void bindView(View view, Context context, Cursor cursor) {
+                    final int stopID = cursor.getInt(0);
+                    view.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            searchView.clearFocus();
+                            enqueueBusStop(stopID);
+                        }
+                    });
+
+                    TextView textStopName = (TextView) view.findViewById(android.R.id.text1);
+                    textStopName.setText(cursor.getString(1));
+
+                    TextView textDistance = (TextView) view.findViewById(android.R.id.text2);
+                    if (cursor.getType(2) == Cursor.FIELD_TYPE_NULL) {
+                        textDistance.setText("");
+                    } else {
+                        textDistance.setText(String.format("%.1f miles", cursor.getDouble(2)));
+                    }
+
+                }
+            });
+        }
     }
 
     @Override
@@ -280,12 +390,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks
-        // Remember: Specify a parent activity in the manifest so Android
-        //          handles Home/Up button clicks automagically
         int id = item.getItemId();
 
-        // Setting action
         if (id == R.id.action_about) {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://rikkigibson.github.io/corvallisbus"));
             startActivity(intent);
