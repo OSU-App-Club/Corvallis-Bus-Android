@@ -1,6 +1,5 @@
 package osu.appclub.corvallisbus.favorites;
 
-import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -8,7 +7,6 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
-import android.view.ActionProvider;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -17,9 +15,9 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -240,34 +238,49 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
         startFavoritesDownloadTask(location);
     }
 
-    public void startFavoritesDownloadTask(final Location location) {
-        final List<Integer> stopIds = CorvallisBusPreferences.getFavoriteStopIds(getActivity());
+    private static final class FavoritesDownloadTask extends AsyncTask<Void, Void, List<FavoriteStopViewModel>> {
+        final WeakReference<FavoritesFragment> fragmentRef;
+        final List<Integer> stopIds;
+        private final Location location;
 
-        new AsyncTask<Void, Void, List<FavoriteStopViewModel>>() {
-            @Override
-            protected List<FavoriteStopViewModel> doInBackground(Void... params) {
-                Log.d("osu.appclub", "Loading favorite stops from background thread");
-                return CorvallisBusAPIClient.getFavoriteStops(stopIds, location);
+        private FavoritesDownloadTask(WeakReference<FavoritesFragment> fragmentRef, List<Integer> stopIds, Location location) {
+            this.fragmentRef = fragmentRef;
+            this.stopIds = stopIds;
+            this.location = location;
+        }
+
+        @Override
+        protected List<FavoriteStopViewModel> doInBackground(Void... params) {
+            Log.d("osu.appclub", "Loading favorite stops from background thread");
+            return CorvallisBusAPIClient.getFavoriteStops(stopIds, location);
+        }
+
+        @Override
+        protected void onPostExecute(List<FavoriteStopViewModel> favoriteStopViewModels) {
+            FavoritesFragment fragment = fragmentRef.get();
+            if (fragment == null) {
+                Log.w("osu.appclub", "Unexpected null favorites fragment");
+                return;
             }
 
-            @Override
-            protected void onPostExecute(List<FavoriteStopViewModel> favoriteStopViewModels) {
-                super.onPostExecute(favoriteStopViewModels);
+            fragment.listItems.clear();
 
-                listItems.clear();
-
-                if (favoriteStopViewModels == null) {
-                    Toast.makeText(getActivity(), "Failed to load favorites list", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    listItems.addAll(favoriteStopViewModels);
-                }
-                adapter.notifyDataSetChanged();
-
-                if (swipeRefreshLayout != null) {
-                    swipeRefreshLayout.setRefreshing(false);
-                }
+            if (favoriteStopViewModels == null) {
+                Toast.makeText(fragment.getActivity(), "Failed to load favorites list", Toast.LENGTH_SHORT).show();
             }
-        }.execute();
+            else {
+                fragment.listItems.addAll(favoriteStopViewModels);
+            }
+            fragment.adapter.notifyDataSetChanged();
+
+            if (fragment.swipeRefreshLayout != null) {
+                fragment.swipeRefreshLayout.setRefreshing(false);
+            }
+        }
+    }
+
+    public void startFavoritesDownloadTask(Location location) {
+        List<Integer> stopIds = CorvallisBusPreferences.getFavoriteStopIds(getActivity());
+        new FavoritesDownloadTask(new WeakReference<>(this), stopIds, location).execute();
     }
 }

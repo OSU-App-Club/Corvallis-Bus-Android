@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.MapView;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,8 +34,10 @@ import osu.appclub.corvallisbus.dataaccess.CorvallisBusAPIClient;
 import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
 
-public class StopsFragment extends ListFragment implements BusMapPresenter.OnStopSelectedListener,
-        FloatingActionButton.OnClickListener {
+public class StopsFragment
+        extends ListFragment
+        implements BusMapPresenter.OnStopSelectedListener,
+            FloatingActionButton.OnClickListener {
     MapView mapView;
     BusMapPresenter mapPresenter;
     TextView textStopName;
@@ -207,6 +210,32 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         }
     };
 
+    private static final class LoadArrivalsTask extends AsyncTask<Void, Void, List<RouteDetailsViewModel>> {
+        private final WeakReference<StopsFragment> fragmentRef;
+        private final int selectedStopId;
+
+        LoadArrivalsTask(WeakReference<StopsFragment> fragmentRef, int selectedStopId) {
+            this.fragmentRef = fragmentRef;
+            this.selectedStopId = selectedStopId;
+        }
+
+        @Override
+        protected List<RouteDetailsViewModel> doInBackground(Void... params) {
+            Log.d("osu.appclub", "Loading route details from background thread.");
+            return CorvallisBusAPIClient.getRouteDetailsViewModels(selectedStopId);
+        }
+
+        @Override
+        protected void onPostExecute(final List<RouteDetailsViewModel> viewModels) {
+            StopsFragment fragment = fragmentRef.get();
+            if (fragment == null) {
+                Log.w("osu.appclub", "Unexpected null stops fragment");
+            } else {
+                fragment.onLoadArrivals(viewModels);
+            }
+        }
+    }
+
     public void startLoadingArrivals() {
         if (selectedStopId == null) {
             return;
@@ -215,18 +244,7 @@ public class StopsFragment extends ListFragment implements BusMapPresenter.OnSto
         arrivalsDidFinishLoading = false;
         handler.postDelayed(clearListRunnable, 1000);
 
-        new AsyncTask<Void, Void, List<RouteDetailsViewModel>>() {
-            @Override
-            protected List<RouteDetailsViewModel> doInBackground(Void... params) {
-                Log.d("osu.appclub", "Loading route details from background thread.");
-                return CorvallisBusAPIClient.getRouteDetailsViewModels(selectedStopId);
-            }
-
-            @Override
-            protected void onPostExecute(final List<RouteDetailsViewModel> viewModels) {
-                onLoadArrivals(viewModels);
-            }
-        }.execute();
+        new LoadArrivalsTask(new WeakReference<StopsFragment>(this), selectedStopId).execute();
     }
 
     void onLoadArrivals(@Nullable final List<RouteDetailsViewModel> viewModels) {

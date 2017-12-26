@@ -24,6 +24,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,9 +40,6 @@ import osu.appclub.corvallisbus.models.BusStaticData;
 import osu.appclub.corvallisbus.models.BusStop;
 import osu.appclub.corvallisbus.models.RouteDetailsViewModel;
 
-/**
- * Created by rikkigibson on 1/20/16.
- */
 public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.LocationAvailableListener,
         GoogleMap.OnMarkerClickListener, GoogleMap.InfoWindowAdapter, BusStopSelectionQueue.Listener,
         ActivityRunningMonitor.Listener {
@@ -63,10 +61,10 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         }
     };
 
-    BitmapDescriptor green_icon;
-    BitmapDescriptor green_selected_icon;
-    BitmapDescriptor gold_icon;
-    BitmapDescriptor gold_selected_icon;
+    private BitmapDescriptor green_icon;
+    private BitmapDescriptor green_selected_icon;
+    private BitmapDescriptor gold_icon;
+    private BitmapDescriptor gold_selected_icon;
 
     public OnStopSelectedListener stopSelectedListener;
 
@@ -133,7 +131,7 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         initializeUserLocation();
     }
 
-    void initializeUserLocation() {
+    private void initializeUserLocation() {
         try {
             googleMap.setMyLocationEnabled(true);
         }
@@ -155,44 +153,58 @@ public class BusMapPresenter implements OnMapReadyCallback, LocationProvider.Loc
         }
     }
 
-    void initMarkers() {
+    private static final class LoadMarkersTask extends AsyncTask<Void, Void, BusStaticData> {
+        final WeakReference<BusMapPresenter> presenterRef;
+
+        LoadMarkersTask(WeakReference<BusMapPresenter> presenterRef) {
+            this.presenterRef = presenterRef;
+        }
+
+        @Override
+        protected BusStaticData doInBackground(Void... params) {
+            return CorvallisBusAPIClient.getStaticData();
+        }
+
+        @Override
+        protected void onPostExecute(@Nullable BusStaticData busStaticData) {
+            BusMapPresenter presenter = presenterRef.get();
+            if (presenter == null) {
+                Log.w("osu.appclub", "Unexpected null BusMapPresenter");
+                return;
+            }
+
+            if (presenter.markersLoadState == ResourceLoadState.Completed) {
+                // prevent populating map multiple times
+                return;
+            }
+            if (busStaticData == null) {
+                presenter.markersLoadState = ResourceLoadState.NotStarted;
+                // Try again if load failed and app is running
+                if (presenter.activityRunningMonitor.isActivityRunning()) {
+                    Toast.makeText(presenter.context, "Failed to load bus stops", Toast.LENGTH_SHORT)
+                            .show();
+                    presenter.handler.postDelayed(presenter.initMarkersRunnable, 5000);
+                }
+                return;
+            }
+            presenter.markersLoadState = ResourceLoadState.Completed;
+            presenter.activityRunningMonitor.removeActivityRunningListener(presenter);
+
+            presenter.createMarkers(busStaticData.stops);
+            presenter.selectQueuedStopIfReady();
+        }
+    }
+
+    private void initMarkers() {
         if (markersLoadState != ResourceLoadState.NotStarted) {
             return;
         }
         markersLoadState = ResourceLoadState.Started;
 
-        new AsyncTask<Void, Void, BusStaticData>() {
-            @Override
-            protected BusStaticData doInBackground(Void... params) {
-                return CorvallisBusAPIClient.getStaticData();
-            }
-
-            @Override
-            protected void onPostExecute(@Nullable BusStaticData busStaticData) {
-                if (markersLoadState == ResourceLoadState.Completed) {
-                    // prevent populating map multiple times
-                    return;
-                }
-                if (busStaticData == null) {
-                    markersLoadState = ResourceLoadState.NotStarted;
-                    // Try again if load failed and app is running
-                    if (activityRunningMonitor.isActivityRunning()) {
-                        Toast.makeText(context, "Failed to load bus stops", Toast.LENGTH_SHORT)
-                                .show();
-                        handler.postDelayed(initMarkersRunnable, 5000);
-                    }
-                    return;
-                }
-                markersLoadState = ResourceLoadState.Completed;
-                activityRunningMonitor.removeActivityRunningListener(BusMapPresenter.this);
-
-                createMarkers(busStaticData.stops);
-                selectQueuedStopIfReady();
-            }
-        }.execute();
+        new LoadMarkersTask(new WeakReference<>(this)).execute();
     }
 
-    public void updateFavoriteStopsState(List<Integer> favoriteStopIds) {
+    void updateFavoriteStopsState(List<Integer> favoriteStopIds) {
         if (markersLoadState != ResourceLoadState.Completed) { return; }
 
         for (Map.Entry<Marker, BusStop> kvp : markersLookup.entrySet()) {

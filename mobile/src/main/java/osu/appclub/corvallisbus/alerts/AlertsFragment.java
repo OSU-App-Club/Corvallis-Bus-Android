@@ -19,6 +19,7 @@ import org.mcsoxford.rss.RSSFeed;
 import org.mcsoxford.rss.RSSItem;
 import org.mcsoxford.rss.RSSReader;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,44 +106,54 @@ public class AlertsFragment extends ListFragment {
         startLoadingAlerts();
     }
 
+    private static final class LoadAlertsTask extends AsyncTask<Void, Void, List<AlertsItem>> {
+        private final WeakReference<AlertsFragment> fragmentRef;
+
+        LoadAlertsTask(WeakReference<AlertsFragment> fragmentRef) {
+            this.fragmentRef = fragmentRef;
+        }
+
+        @Override
+        protected List<AlertsItem> doInBackground(Void... params) {
+            Log.d("osu.appclub", "Loading service alerts from background thread");
+            List<AlertsItem> alertsItems = CorvallisBusAPIClient.getServiceAlerts();
+            return alertsItems;
+        }
+
+        @Override
+        protected void onPostExecute(List<AlertsItem> alertsItems) {
+            AlertsFragment fragment = fragmentRef.get();
+            if (fragment == null) {
+                Log.w("osu.appclub", "Unexpected null alerts fragment");
+                return;
+            }
+
+            fragment.listItems.clear();
+
+            if (alertsItems == null) {
+                Toast toast = Toast.makeText(fragment.getActivity(), "Failed to load Service Alerts feed", Toast.LENGTH_SHORT);
+                toast.show();
+            }
+            else {
+                fragment.listItems.addAll(alertsItems);
+            }
+
+            // better to just have the app explode if this thing is somehow null
+            fragment.adapter.notifyDataSetInvalidated();
+
+            if (fragment.swipeRefreshLayout != null) {
+                fragment.swipeRefreshLayout.setRefreshing(false);
+            }
+        }
+    }
+
     public void startLoadingAlerts() {
         if (adapter == null) {
             adapter = new AlertsListAdapter(getActivity(), listItems);
             setListAdapter(adapter);
         }
 
-        AsyncTask<Void, Void, List<AlertsItem>> task = new AsyncTask<Void, Void, List<AlertsItem>>() {
-            final String FEED_URI = "https://www.corvallisoregon.gov/Rss.aspx?type=5&cat=100,104,105,106,107,108,109,110,111,112,113,114,58,119&dept=12&paramtime=Current";
-            final RSSReader reader = new RSSReader();
-
-            @Override
-            protected List<AlertsItem> doInBackground(Void... params) {
-                Log.d("osu.appclub", "Loading service alerts from background thread");
-                List<AlertsItem> alertsItems = CorvallisBusAPIClient.getServiceAlerts();
-                return alertsItems;
-            }
-
-            @Override
-            protected void onPostExecute(List<AlertsItem> alertsItems) {
-                listItems.clear();
-
-                if (alertsItems == null) {
-                    Toast toast = Toast.makeText(getActivity(), "Failed to load Service Alerts feed", Toast.LENGTH_SHORT);
-                    toast.show();
-                }
-                else {
-                    listItems.addAll(alertsItems);
-                }
-
-                // better to just have the app explode if this thing is somehow null
-                adapter.notifyDataSetInvalidated();
-
-                if (swipeRefreshLayout != null) {
-                    swipeRefreshLayout.setRefreshing(false);
-                }
-            }
-        };
-        task.execute();
+        new LoadAlertsTask(new WeakReference<>(this)).execute();
     }
 
     @Override
