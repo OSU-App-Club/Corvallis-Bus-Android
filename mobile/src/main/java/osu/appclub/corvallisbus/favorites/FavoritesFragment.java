@@ -266,7 +266,12 @@ public class FavoritesFragment extends ListFragment implements LocationProvider.
             fragment.listItems.clear();
 
             if (favoriteStopViewModels == null) {
-                Toast.makeText(fragment.getActivity(), "Failed to load favorites list", Toast.LENGTH_SHORT).show();
+                Context context = fragment.getContext();
+                if (context == null) {
+                    Log.w("osu.appclub", "Failed to load favorites list and had null activity");
+                } else {
+                    Toast.makeText(context, "Failed to load favorites list", Toast.LENGTH_SHORT).show();
+                }
             }
             else {
                 fragment.listItems.addAll(favoriteStopViewModels);

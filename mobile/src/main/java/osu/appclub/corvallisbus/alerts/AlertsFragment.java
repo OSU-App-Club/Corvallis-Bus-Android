@@ -131,8 +131,12 @@ public class AlertsFragment extends ListFragment {
             fragment.listItems.clear();
 
             if (alertsItems == null) {
-                Toast toast = Toast.makeText(fragment.getActivity(), "Failed to load Service Alerts feed", Toast.LENGTH_SHORT);
-                toast.show();
+                Context context = fragment.getContext();
+                if (context == null) {
+                    Log.w("osu.appclub", "Failed to load service alerts and had null activity");
+                } else {
+                    Toast.makeText(fragment.getActivity(), "Failed to load Service Alerts feed", Toast.LENGTH_SHORT).show();
+                }
             }
             else {
                 fragment.listItems.addAll(alertsItems);
