@@ -236,15 +236,21 @@ public class StopsFragment
         }
     }
 
+    private LoadArrivalsTask loadArrivalsTask;
     public void startLoadingArrivals() {
         if (selectedStopId == null) {
             return;
         }
 
+        if (loadArrivalsTask != null) {
+            loadArrivalsTask.cancel(true);
+        }
+
         arrivalsDidFinishLoading = false;
         handler.postDelayed(clearListRunnable, 1000);
 
-        new LoadArrivalsTask(new WeakReference<StopsFragment>(this), selectedStopId).execute();
+        loadArrivalsTask = new LoadArrivalsTask(new WeakReference<>(this), selectedStopId);
+        loadArrivalsTask.execute();
     }
 
     void onLoadArrivals(@Nullable final List<RouteDetailsViewModel> viewModels) {
