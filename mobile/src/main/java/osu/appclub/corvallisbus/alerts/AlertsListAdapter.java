@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+import osu.appclub.corvallisbus.R;
 import osu.appclub.corvallisbus.models.AlertsItem;
 
 /**
@@ -36,7 +37,11 @@ public class AlertsListAdapter extends ArrayAdapter<AlertsItem> {
         text1.setText(alertsItem.title);
 
         TextView text2 = (TextView) convertView.findViewById(android.R.id.text2);
-        text2.setText(dateFormat.format(alertsItem.publishDate));
+        if (alertsItem.publishDate == null) {
+            text2.setText(R.string.alert_unknown_date);
+        } else {
+            text2.setText(dateFormat.format(alertsItem.publishDate));
+        }
 
         return convertView;
     }

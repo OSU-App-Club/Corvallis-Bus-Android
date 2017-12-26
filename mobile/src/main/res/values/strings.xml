@@ -30,4 +30,8 @@
     <string name="search_no_results">
         No results
     </string>
+
+    <string name="alert_unknown_date">
+        Unknown date
+    </string>
 </resources>
