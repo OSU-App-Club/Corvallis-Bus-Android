@@ -20,7 +20,7 @@ import osu.appclub.corvallisbus.models.BusStop;
 
 public class StopsSearchTask extends AsyncTask<Void, Void, Cursor> {
     private final WeakReference<? extends Listener> listenerRef;
-    private final Pattern searchPattern;
+    private final List<Pattern> searchPatterns;
 
     @Nullable
     private final Location location;
@@ -33,7 +33,14 @@ public class StopsSearchTask extends AsyncTask<Void, Void, Cursor> {
     StopsSearchTask(WeakReference<? extends Listener> listenerRef, String searchText, @Nullable Location location) {
         this.listenerRef = listenerRef;
         this.location = location;
-        searchPattern = Pattern.compile(searchText, Pattern.CASE_INSENSITIVE + Pattern.LITERAL);
+
+        searchPatterns = new ArrayList<>();
+        String[] parts = searchText.split("\\s+");
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                searchPatterns.add(Pattern.compile(part, Pattern.CASE_INSENSITIVE + Pattern.LITERAL));
+            }
+        }
     }
 
     @Override
@@ -48,8 +55,12 @@ public class StopsSearchTask extends AsyncTask<Void, Void, Cursor> {
         float[] distanceResult = new float[1];
         for (int i = 0; i < stops.size(); i++) {
             BusStop candidate = stops.valueAt(i);
-            if (searchPattern.matcher(candidate.name).find()) {
+            boolean matchesAll = true;
+            for (Pattern pattern : searchPatterns) {
+                matchesAll = matchesAll && pattern.matcher(candidate.name).find();
+            }
 
+            if (matchesAll) {
                 Double distance;
                 if (location == null) {
                     distance = null;
